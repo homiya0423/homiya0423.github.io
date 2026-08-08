@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ダーツ クリケット練習サポート</title>
+<style>
+  :root {
+    --bg-base: #0b0e14;
+    --panel-bg: #171c26;
+    --panel-border: #2a3441;
+    --text-main: #f8fafc;
+    --text-sub: #94a3b8;
+    --accent-cyan: #00f0ff;
+    --accent-red: #ff2a5f;
+    --accent-green: #00e676;
+    --accent-yellow: #ffb300;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 20px;
+    max-width: 600px;
+    margin: 0 auto;
+    background-color: var(--bg-base);
+    color: var(--text-main);
+  }
+  h1 {
+    font-size: 22px;
+    text-align: center;
+    color: var(--text-main);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(255,255,255,0.2);
+    margin-bottom: 30px;
+  }
+  
+  /* 画面切り替え用 */
+  .view { display: none; }
+  .view.active { display: block; animation: fadeIn 0.3s ease; }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 共通パネル */
+  .info-panel {
+    display: flex;
+    justify-content: space-between;
+    background: var(--panel-bg);
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 1px solid var(--panel-border);
+    margin-bottom: 25px;
+    font-weight: bold;
+    font-size: 15px;
+    color: var(--accent-cyan);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  }
+  
+  /* テーブル（スコアボード風） */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--panel-bg);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 25px;
+    border: 1px solid var(--panel-border);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  }
+  th, td {
+    padding: 14px 12px;
+    text-align: center;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  th {
+    background-color: rgba(255, 255, 255, 0.03);
+    font-size: 12px;
+    color: var(--text-sub);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  td {
+    font-size: 16px;
+    font-weight: bold;
+  }
+  
+  /* 練習画面のアクティブ行 */
+  #score-tbody tr {
+    transition: background-color 0.2s;
+  }
+  #score-tbody tr.active {
+    background: linear-gradient(90deg, rgba(0, 240, 255, 0.15) 0%, rgba(0, 240, 255, 0) 100%);
+    box-shadow: inset 4px 0 0 var(--accent-cyan);
+    color: var(--accent-cyan);
+  }
+  #score-tbody tr:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+  }
+
+  /* コントロールボタン */
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+  }
+  button {
+    padding: 16px 10px;
+    font-size: 16px;
+    font-weight: bold;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  button:active {
+    transform: scale(0.95);
+  }
+  button:disabled {
+    background: #2a3441 !important;
+    color: #475569 !important;
+    box-shadow: none !important;
+    cursor: not-allowed;
+    transform: none;
+  }
+  
+  .btn-single { 
+    background: linear-gradient(135deg, #00b09b, #96c93d); 
+    color: #111; 
+    box-shadow: 0 4px 15px rgba(150, 201, 61, 0.3);
+  }
+  .btn-double { 
+    background: linear-gradient(135deg, #00c6ff, #0072ff); 
+    color: #fff; 
+    box-shadow: 0 4px 15px rgba(0, 198, 255, 0.3);
+  }
+  .btn-triple { 
+    background: linear-gradient(135deg, #f12711, #f5af19); 
+    color: #fff; 
+    box-shadow: 0 4px 15px rgba(241, 39, 17, 0.3);
+  }
+  
+  .btn-action {
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 12px;
+    background-color: var(--panel-border);
+    color: var(--text-main);
+  }
+  .btn-undo { 
+    background-color: transparent; 
+    border: 1px solid var(--accent-yellow); 
+    color: var(--accent-yellow); 
+  }
+  .btn-finish {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    box-shadow: 0 4px 15px rgba(42, 82, 152, 0.4);
+  }
+  
+  /* 改善された「履歴を見る」ボタン（サイバー感のある枠線つきボタン） */
+  .btn-history { 
+    background-color: var(--panel-bg);
+    border: 1px solid var(--accent-cyan);
+    color: var(--accent-cyan);
+    box-shadow: 0 4px 15px rgba(0, 240, 255, 0.15);
+  }
+  .btn-history:active {
+    background-color: rgba(0, 240, 255, 0.1);
+  }
+
+  .btn-danger { 
+    background-color: transparent;
+    border: 1px solid var(--accent-red);
+    color: var(--accent-red); 
+    margin-top: 40px; 
+  }
+
+  /* 履歴画面のスタッツパネル */
+  .stats-panel {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--panel-border);
+    margin-bottom: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  }
+  .stats-panel h2 {
+    margin-top: 0;
+    font-size: 14px;
+    color: var(--text-sub);
+    text-align: center;
+    margin-bottom: 20px;
+    letter-spacing: 1px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    text-align: center;
+  }
+  .stat-item {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 12px 5px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .stat-num {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-bottom: 8px;
+  }
+  .stat-avg {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--accent-cyan);
+  }
+
+  /* 日毎のグループ */
+  .daily-wrapper {
+    margin-top: 40px;
+    padding-top: 20px;
+    position: relative;
+  }
+  .daily-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: var(--accent-cyan);
+  }
+  .daily-title {
+    font-size: 16px;
+    color: var(--text-main);
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+  }
+  .daily-stats-panel {
+    background: transparent;
+    box-shadow: none;
+    border: 1px dashed var(--panel-border);
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  .daily-stats-panel h3 {
+    margin: 0 0 15px 0;
+    font-size: 12px;
+    text-align: center;
+    color: var(--accent-green);
+    text-transform: uppercase;
+  }
+
+  /* 履歴画面の各セットカード */
+  .history-card {
+    background: var(--panel-bg);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid var(--panel-border);
+    margin-bottom: 15px;
+  }
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 12px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: var(--accent-cyan);
+  }
+  .history-time {
+    font-size: 12px;
+    color: var(--text-sub);
+  }
+  .history-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    font-size: 12px;
+    text-align: center;
+    gap: 6px;
+  }
+  .history-grid div {
+    background: rgba(255,255,255,0.03);
+    padding: 8px 2px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.02);
+  }
+  .history-grid .total {
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--accent-cyan);
+    border-color: rgba(0, 240, 255, 0.2);
+  }
+  .hit-count {
+    font-size: 9px;
+    color: var(--text-sub);
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+  <!-- ================= 練習画面 ================= -->
+  <div id="practice-view" class="view active">
+    <h1>Cricket Practice</h1>
+
+    <div class="info-panel">
+      <div><span id="current-date"></span></div>
+      <div>SET <span id="set-number" style="font-size: 18px;">1</span></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Target</th>
+          <th>Darts</th>
+          <th>Marks</th>
+        </tr>
+      </thead>
+      <tbody id="score-tbody">
+        <!-- 生成 -->
+      </tbody>
+    </table>
+
+    <div class="controls">
+      <button class="btn-single" onclick="recordHit(1)">Single</button>
+      <button class="btn-double" onclick="recordHit(2)">Double</button>
+      <button class="btn-triple" id="btn-triple" onclick="recordHit(3)">Triple</button>
+    </div>
+
+    <button class="btn-action btn-undo" onclick="undo()">UNDO (1投戻る)</button>
+    <button class="btn-action btn-finish" onclick="finishSet()">SAVE & NEXT SET</button>
+    <button class="btn-action btn-history" onclick="switchView('history-view')">PLAY DATA (履歴・分析)</button>
+  </div>
+
+  <!-- ================= 履歴画面 ================= -->
+  <div id="history-view" class="view">
+    <h1>Play Data</h1>
+    
+    <button class="btn-action btn-history" onclick="switchView('practice-view')" style="margin-bottom: 25px;">← BACK TO PLAY</button>
+
+    <!-- 全期間の平均スタッツパネル -->
+    <div class="stats-panel" id="stats-panel">
+      <h2>OVERALL AVERAGE MARKS (3 DARTS)</h2>
+      <div class="stats-grid" id="stats-grid">
+        <!-- 生成 -->
+      </div>
+    </div>
+
+    <!-- 日毎の履歴と平均 -->
+    <div id="history-container"></div>
+
+    <button class="btn-action btn-danger" onclick="clearHistory()">DELETE ALL DATA</button>
+  </div>
+
+<script>
+  const targetNumbers = ['20', '19', '18', '17', '16', '15', 'Bull'];
+  let currentSet = 1;
+  let activeNumber = '20';
+  let scores = {};
+  let historyStack = [];
+  let savedData = [];
+
+  function getFormattedDate() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const hh = d.getHours();
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
+  }
+
+  function init() {
+    document.getElementById('current-date').textContent = new Date().toLocaleDateString('ja-JP');
+    loadHistory();
+    initSet();
+  }
+
+  function switchView(viewId) {
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    document.getElementById(viewId).classList.add('active');
+    if (viewId === 'history-view') {
+      renderHistory();
+    }
+  }
+
+  function initSet() {
+    scores = {};
+    targetNumbers.forEach(num => {
+      scores[num] = { darts: 0, marks: 0 };
+    });
+    activeNumber = '20';
+    historyStack = [];
+    document.getElementById('set-number').textContent = currentSet;
+    renderTable();
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('score-tbody');
+    tbody.innerHTML = '';
+
+    targetNumbers.forEach(num => {
+      const tr = document.createElement('tr');
+      if (num === activeNumber) {
+        tr.className = 'active';
+      }
+      
+      tr.onclick = () => {
+        activeNumber = num;
+        renderTable();
+      };
+
+      const tdNum = document.createElement('td');
+      tdNum.textContent = num;
+      
+      const tdDarts = document.createElement('td');
+      tdDarts.textContent = scores[num].darts;
+      
+      const tdMarks = document.createElement('td');
+      tdMarks.textContent = scores[num].marks;
+
+      tr.appendChild(tdNum);
+      tr.appendChild(tdDarts);
+      tr.appendChild(tdMarks);
+      tbody.appendChild(tr);
+    });
+
+    updateButtons();
+  }
+
+  function updateButtons() {
+    const isFull = scores[activeNumber].darts >= 3;
+    const isBull = activeNumber === 'Bull';
+    
+    const buttons = document.querySelectorAll('.controls button');
+    buttons.forEach(btn => btn.disabled = isFull);
+
+    if (isBull) {
+      document.getElementById('btn-triple').disabled = true;
+    }
+  }
+
+  function recordHit(marks) {
+    if (scores[activeNumber].darts >= 3) return;
+
+    historyStack.push({
+      num: activeNumber,
+      marksAdded: marks
+    });
+
+    scores[activeNumber].darts += 1;
+    scores[activeNumber].marks += marks;
+
+    if (scores[activeNumber].darts === 3) {
+      const currentIndex = targetNumbers.indexOf(activeNumber);
+      if (currentIndex < targetNumbers.length - 1) {
+        activeNumber = targetNumbers[currentIndex + 1];
+      }
+    }
+
+    renderTable();
+  }
+
+  function undo() {
+    if (historyStack.length === 0) {
+      alert('取り消せる記録がありません。');
+      return;
+    }
+    
+    const lastAction = historyStack.pop();
+    activeNumber = lastAction.num;
+    scores[activeNumber].darts -= 1;
+    scores[activeNumber].marks -= lastAction.marksAdded;
+    
+    renderTable();
+  }
+
+  function finishSet() {
+    if (confirm(`第${currentSet}セットの記録を保存して、次へ進みますか？`)) {
+      
+      let totalMarks = 0;
+      targetNumbers.forEach(num => {
+        totalMarks += scores[num].marks;
+      });
+
+      const setData = {
+        date: getFormattedDate(),
+        setNumber: currentSet,
+        scores: JSON.parse(JSON.stringify(scores)),
+        totalMarks: totalMarks
+      };
+
+      savedData.unshift(setData);
+      saveHistoryToStorage();
+
+      currentSet += 1;
+      initSet();
+    }
+  }
+
+  function loadHistory() {
+    const data = localStorage.getItem('dartsCricketHistory');
+    if (data) {
+      savedData = JSON.parse(data);
+      if (savedData.length > 0) {
+        currentSet = savedData[0].setNumber + 1;
+      }
+    }
+  }
+
+  function saveHistoryToStorage() {
+    localStorage.setItem('dartsCricketHistory', JSON.stringify(savedData));
+  }
+
+  function clearHistory() {
+    if (confirm('本当にすべての履歴を削除しますか？この操作は元に戻せません。')) {
+      savedData = [];
+      saveHistoryToStorage();
+      renderHistory();
+      currentSet = 1;
+      initSet();
+    }
+  }
+
+  function renderHistory() {
+    const container = document.getElementById('history-container');
+    const statsGrid = document.getElementById('stats-grid');
+    const statsPanel = document.getElementById('stats-panel');
+    
+    container.innerHTML = '';
+    statsGrid.innerHTML = '';
+
+    if (savedData.length === 0) {
+      statsPanel.style.display = 'none';
+      container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding: 40px 0;">NO DATA</p>';
+      return;
+    }
+
+    statsPanel.style.display = 'block';
+
+    let overallStats = {};
+    targetNumbers.forEach(num => overallStats[num] = 0);
+    
+    savedData.forEach(data => {
+      targetNumbers.forEach(num => {
+        overallStats[num] += data.scores[num].marks;
+      });
+    });
+
+    const totalSets = savedData.length;
+    targetNumbers.forEach(num => {
+      const avg = (overallStats[num] / totalSets).toFixed(2);
+      statsGrid.innerHTML += `
+        <div class="stat-item">
+          <div class="stat-num">${num}</div>
+          <div class="stat-avg">${avg}</div>
+        </div>
+      `;
+    });
+
+    const groupedData = {};
+    const dateKeys = [];
+
+    savedData.forEach(data => {
+      const dateOnly = data.date.split(' ')[0];
+      if (!groupedData[dateOnly]) {
+        groupedData[dateOnly] = [];
+        dateKeys.push(dateOnly);
+      }
+      groupedData[dateOnly].push(data);
+    });
+
+    dateKeys.forEach(dateOnly => {
+      const daySets = groupedData[dateOnly];
+      
+      let dailyStats = {};
+      targetNumbers.forEach(num => dailyStats[num] = 0);
+      daySets.forEach(set => {
+        targetNumbers.forEach(num => dailyStats[num] += set.scores[num].marks);
+      });
+
+      const dailyWrapper = document.createElement('div');
+      dailyWrapper.className = 'daily-wrapper';
+
+      const dailyTitle = document.createElement('h2');
+      dailyTitle.className = 'daily-title';
+      dailyTitle.textContent = `${dateOnly} (${daySets.length} SETS)`;
+      dailyWrapper.appendChild(dailyTitle);
+
+      const dailyStatsPanel = document.createElement('div');
+      dailyStatsPanel.className = 'stats-panel daily-stats-panel';
+      let dailyStatsHtml = `<h3>DAILY AVERAGE</h3><div class="stats-grid">`;
+      targetNumbers.forEach(num => {
+        const avg = (dailyStats[num] / daySets.length).toFixed(2);
+        dailyStatsHtml += `
+          <div class="stat-item">
+            <div class="stat-num">${num}</div>
+            <div class="stat-avg" style="color:var(--accent-green);">${avg}</div>
+          </div>
+        `;
+      });
+      dailyStatsHtml += `</div>`;
+      dailyStatsPanel.innerHTML = dailyStatsHtml;
+      dailyWrapper.appendChild(dailyStatsPanel);
+
+      daySets.forEach(data => {
+        const card = document.createElement('div');
+        card.className = 'history-card';
+
+        const timeOnly = data.date.split(' ')[1] || '';
+
+        const header = document.createElement('div');
+        header.className = 'history-header';
+        header.innerHTML = `
+          <span style="font-weight:bold;">SET ${data.setNumber} <span class="history-time" style="margin-left:10px;">${timeOnly}</span></span>
+          <span style="font-weight:bold;">TOTAL: ${data.totalMarks}</span>
+        `;
+
+        const grid = document.createElement('div');
+        grid.className = 'history-grid';
+        
+        targetNumbers.forEach(num => {
+          grid.innerHTML += `<div style="color:var(--text-sub);">${num}</div>`;
+        });
+        grid.innerHTML += `<div class="total" style="color:var(--accent-cyan);">TOTAL</div>`;
+
+        targetNumbers.forEach(num => {
+          const marks = data.scores[num].marks;
+          const hits = data.scores[num].darts;
+          grid.innerHTML += `
+            <div>
+              <span style="font-weight:bold; font-size:15px; color:var(--text-main);">${marks}</span>
+              <span class="hit-count">(${hits}hit)</span>
+            </div>
+          `;
+        });
+        grid.innerHTML += `<div class="total" style="font-size:15px; font-weight:bold;">${data.totalMarks}</div>`;
+
+        card.appendChild(header);
+        card.appendChild(grid);
+        dailyWrapper.appendChild(card);
+      });
+
+      container.appendChild(dailyWrapper);
+    });
+  }
+
+  init();
+</script>
+
+</body>
+</html>
