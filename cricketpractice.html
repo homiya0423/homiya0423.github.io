@@ -239,7 +239,6 @@
     margin-bottom: 20px;
     letter-spacing: 1px;
   }
-  /* スマホでもはみ出さないよう、自動折り返し（フレキシブルグリッド）に変更 */
   .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
@@ -248,19 +247,39 @@
   }
   .stat-item {
     background: rgba(255, 255, 255, 0.03);
-    padding: 12px 5px;
+    padding: 10px 4px;
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
   .stat-num {
     font-size: 11px;
     color: var(--text-sub);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding-bottom: 4px;
   }
-  .stat-avg {
-    font-size: 15px;
+  .stat-row {
+    font-size: 9px;
+    color: var(--text-sub);
+    margin-top: 4px;
+  }
+  /* OVERALLのマーク数 (シアン) */
+  .stat-avg-overall {
+    font-size: 14px;
     font-weight: bold;
     color: var(--accent-cyan);
+  }
+  /* DAILYのマーク数 (グリーン) */
+  .stat-avg-daily {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--accent-green);
+  }
+  /* ヒット数は共通の落ち着いたグレートーン */
+  .stat-hit {
+    font-size: 14px;
+    font-weight: bold;
+    color: #cbd5e1;
   }
 
   /* 日毎のグループ */
@@ -299,14 +318,14 @@
     text-transform: uppercase;
   }
 
-  /* 履歴画面の各セットカード (8項目なのでこちらはスクロールまたはコンパクトに) */
+  /* 履歴画面の各セットカード */
   .history-card {
     background: var(--panel-bg);
     padding: 15px;
     border-radius: 12px;
     border: 1px solid var(--panel-border);
     margin-bottom: 15px;
-    overflow-x: auto; /* 万が一のときは横スクロール可能に */
+    overflow-x: auto;
   }
   .history-header {
     display: flex;
@@ -327,7 +346,7 @@
     font-size: 11px;
     text-align: center;
     gap: 4px;
-    min-width: 360px; /* スマホで縮みすぎないよう最小幅を確保 */
+    min-width: 360px;
   }
   .history-grid div {
     background: rgba(255,255,255,0.03);
@@ -393,7 +412,7 @@
 
     <!-- 全期間の平均スタッツパネル -->
     <div class="stats-panel" id="stats-panel">
-      <h2>OVERALL AVERAGE MARKS (3 DARTS)</h2>
+      <h2>OVERALL AVERAGE (MARKS / HITS)</h2>
       <div class="stats-grid" id="stats-grid">
         <!-- 生成 -->
       </div>
@@ -650,22 +669,29 @@
 
     statsPanel.style.display = 'block';
 
-    let overallStats = {};
-    targetNumbers.forEach(num => overallStats[num] = 0);
+    let overallMarks = {};
+    let overallDarts = {};
+    targetNumbers.forEach(num => {
+      overallMarks[num] = 0;
+      overallDarts[num] = 0;
+    });
     
     savedData.forEach(data => {
       targetNumbers.forEach(num => {
-        overallStats[num] += data.scores[num].marks;
+        overallMarks[num] += data.scores[num].marks;
+        overallDarts[num] += data.scores[num].darts;
       });
     });
 
     const totalSets = savedData.length;
     targetNumbers.forEach(num => {
-      const avg = (overallStats[num] / totalSets).toFixed(2);
+      const avgMarks = (overallMarks[num] / totalSets).toFixed(2);
+      const avgHits = (overallDarts[num] / totalSets).toFixed(2);
       statsGrid.innerHTML += `
         <div class="stat-item">
           <div class="stat-num">${num}</div>
-          <div class="stat-avg">${avg}</div>
+          <div class="stat-row">Mark: <span class="stat-avg-overall">${avgMarks}</span></div>
+          <div class="stat-row" style="margin-top:4px;">Hit: <span class="stat-hit">${avgHits}</span></div>
         </div>
       `;
     });
@@ -685,10 +711,17 @@
     dateKeys.forEach(dateOnly => {
       const daySets = groupedData[dateOnly];
       
-      let dailyStats = {};
-      targetNumbers.forEach(num => dailyStats[num] = 0);
+      let dailyMarks = {};
+      let dailyDarts = {};
+      targetNumbers.forEach(num => {
+        dailyMarks[num] = 0;
+        dailyDarts[num] = 0;
+      });
       daySets.forEach(set => {
-        targetNumbers.forEach(num => dailyStats[num] += set.scores[num].marks);
+        targetNumbers.forEach(num => {
+          dailyMarks[num] += set.scores[num].marks;
+          dailyDarts[num] += set.scores[num].darts;
+        });
       });
 
       const dailyWrapper = document.createElement('div');
@@ -701,13 +734,15 @@
 
       const dailyStatsPanel = document.createElement('div');
       dailyStatsPanel.className = 'stats-panel daily-stats-panel';
-      let dailyStatsHtml = `<h3>DAILY AVERAGE</h3><div class="stats-grid">`;
+      let dailyStatsHtml = `<h3>DAILY AVERAGE (MARK / HIT)</h3><div class="stats-grid">`;
       targetNumbers.forEach(num => {
-        const avg = (dailyStats[num] / daySets.length).toFixed(2);
+        const avgMarks = (dailyMarks[num] / daySets.length).toFixed(2);
+        const avgHits = (dailyDarts[num] / daySets.length).toFixed(2);
         dailyStatsHtml += `
           <div class="stat-item">
             <div class="stat-num">${num}</div>
-            <div class="stat-avg" style="color:var(--accent-green);">${avg}</div>
+            <div class="stat-row">Mark: <span class="stat-avg-daily">${avgMarks}</span></div>
+            <div class="stat-row" style="margin-top:4px;">Hit: <span class="stat-hit">${avgHits}</span></div>
           </div>
         `;
       });
