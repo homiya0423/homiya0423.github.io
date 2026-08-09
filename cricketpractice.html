@@ -162,23 +162,64 @@
     background: linear-gradient(135deg, #1e3c72, #2a5298);
     box-shadow: 0 4px 15px rgba(42, 82, 152, 0.4);
   }
-  
-  /* 改善された「履歴を見る」ボタン（サイバー感のある枠線つきボタン） */
   .btn-history { 
     background-color: var(--panel-bg);
     border: 1px solid var(--accent-cyan);
     color: var(--accent-cyan);
     box-shadow: 0 4px 15px rgba(0, 240, 255, 0.15);
   }
-  .btn-history:active {
-    background-color: rgba(0, 240, 255, 0.1);
+  .btn-sync {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    margin-top: 10px;
   }
-
   .btn-danger { 
     background-color: transparent;
     border: 1px solid var(--accent-red);
     color: var(--accent-red); 
-    margin-top: 40px; 
+    margin-top: 20px; 
+  }
+
+  /* バックアップエリアのカード */
+  .backup-card {
+    background: var(--panel-bg);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--panel-border);
+    margin-top: 40px;
+    margin-bottom: 20px;
+  }
+  .backup-card h3 {
+    margin-top: 0;
+    font-size: 14px;
+    color: var(--accent-cyan);
+    margin-bottom: 10px;
+  }
+  .backup-card p {
+    font-size: 12px;
+    color: var(--text-sub);
+    margin-bottom: 15px;
+    line-height: 1.5;
+  }
+  input[type="file"] {
+    display: none;
+  }
+  .file-upload-label {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background-color: var(--panel-border);
+    color: var(--text-main);
+    text-align: center;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    box-sizing: border-box;
+    transition: background 0.2s;
+  }
+  .file-upload-label:hover {
+    background-color: #334155;
   }
 
   /* 履歴画面のスタッツパネル */
@@ -198,9 +239,10 @@
     margin-bottom: 20px;
     letter-spacing: 1px;
   }
+  /* スマホでもはみ出さないよう、自動折り返し（フレキシブルグリッド）に変更 */
   .stats-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
     gap: 8px;
     text-align: center;
   }
@@ -216,7 +258,7 @@
     margin-bottom: 8px;
   }
   .stat-avg {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
     color: var(--accent-cyan);
   }
@@ -257,13 +299,14 @@
     text-transform: uppercase;
   }
 
-  /* 履歴画面の各セットカード */
+  /* 履歴画面の各セットカード (8項目なのでこちらはスクロールまたはコンパクトに) */
   .history-card {
     background: var(--panel-bg);
     padding: 15px;
     border-radius: 12px;
     border: 1px solid var(--panel-border);
     margin-bottom: 15px;
+    overflow-x: auto; /* 万が一のときは横スクロール可能に */
   }
   .history-header {
     display: flex;
@@ -280,10 +323,11 @@
   }
   .history-grid {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
-    font-size: 12px;
+    grid-template-columns: repeat(8, minmax(40px, 1fr));
+    font-size: 11px;
     text-align: center;
-    gap: 6px;
+    gap: 4px;
+    min-width: 360px; /* スマホで縮みすぎないよう最小幅を確保 */
   }
   .history-grid div {
     background: rgba(255,255,255,0.03);
@@ -300,7 +344,7 @@
     border-color: rgba(0, 240, 255, 0.2);
   }
   .hit-count {
-    font-size: 9px;
+    font-size: 8px;
     color: var(--text-sub);
     margin-top: 4px;
   }
@@ -357,6 +401,21 @@
 
     <!-- 日毎の履歴と平均 -->
     <div id="history-container"></div>
+
+    <!-- 端末間同期（バックアップ・復元）セクション -->
+    <div class="backup-card">
+      <h3>デバイス間のデータ同期 (バックアップ)</h3>
+      <p>別の端末（スマホ・PC）へデータを移行する場合、現在の全データをファイルに書き出して読み込ませてください。</p>
+      
+      <button class="btn-action btn-sync" onclick="exportData()">データを書き出す (保存)</button>
+      
+      <div style="margin-top: 15px;">
+        <label class="file-upload-label" for="import-file">
+          データを読み込む (復元)
+        </label>
+        <input type="file" id="import-file" accept=".json" onchange="importData(event)">
+      </div>
+    </div>
 
     <button class="btn-action btn-danger" onclick="clearHistory()">DELETE ALL DATA</button>
   </div>
@@ -521,6 +580,50 @@
     localStorage.setItem('dartsCricketHistory', JSON.stringify(savedData));
   }
 
+  function exportData() {
+    if (savedData.length === 0) {
+      alert('書き出すデータがありません。');
+      return;
+    }
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(savedData));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", "darts_cricket_backup.json");
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }
+
+  function importData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (Array.isArray(imported)) {
+          if (confirm(`読み込んだファイルには ${imported.length} 件のデータが含まれています。現在のデータに統合（または上書き）しますか？`)) {
+            savedData = imported;
+            saveHistoryToStorage();
+            if (savedData.length > 0) {
+              currentSet = savedData[0].setNumber + 1;
+            }
+            initSet();
+            renderHistory();
+            alert('データの読み込みが完了しました！');
+          }
+        } else {
+          alert('ファイルの形式が正しくありません。');
+        }
+      } catch (err) {
+        alert('ファイルの読み込みに失敗しました。');
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
   function clearHistory() {
     if (confirm('本当にすべての履歴を削除しますか？この操作は元に戻せません。')) {
       savedData = [];
@@ -541,7 +644,7 @@
 
     if (savedData.length === 0) {
       statsPanel.style.display = 'none';
-      container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding: 40px 0;">NO DATA</p>';
+      container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding: 20px 0;">NO DATA</p>';
       return;
     }
 
@@ -638,12 +741,12 @@
           const hits = data.scores[num].darts;
           grid.innerHTML += `
             <div>
-              <span style="font-weight:bold; font-size:15px; color:var(--text-main);">${marks}</span>
+              <span style="font-weight:bold; font-size:14px; color:var(--text-main);">${marks}</span>
               <span class="hit-count">(${hits}hit)</span>
             </div>
           `;
         });
-        grid.innerHTML += `<div class="total" style="font-size:15px; font-weight:bold;">${data.totalMarks}</div>`;
+        grid.innerHTML += `<div class="total" style="font-size:14px; font-weight:bold;">${data.totalMarks}</div>`;
 
         card.appendChild(header);
         card.appendChild(grid);
