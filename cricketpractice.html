@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ダーツ クリケット練習サポート</title>
+<title>ダーツ 練習サポートツール</title>
 <style>
   :root {
     --bg-base: #0b0e14;
@@ -42,6 +42,40 @@
   @keyframes fadeIn {
     from { opacity: 0; transform: translateY(5px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* TOPメニュー画面用カードスタイル */
+  .menu-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 40px;
+  }
+  .menu-card {
+    background: var(--panel-bg);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid var(--panel-border);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    text-align: center;
+  }
+  .menu-card:hover {
+    border-color: var(--accent-cyan);
+    transform: translateY(-2px);
+  }
+  .menu-card h2 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    color: var(--accent-cyan);
+    letter-spacing: 1px;
+  }
+  .menu-card p {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-sub);
+    line-height: 1.5;
   }
 
   /* 共通パネル */
@@ -88,29 +122,37 @@
   }
   
   /* 練習画面のアクティブ行 */
-  #score-tbody tr {
+  #cricket-tbody tr, #mark10-tbody tr {
     transition: background-color 0.2s;
   }
-  #score-tbody tr.active {
+  #cricket-tbody tr.active, #mark10-tbody tr.active {
     background: linear-gradient(90deg, rgba(0, 240, 255, 0.15) 0%, rgba(0, 240, 255, 0) 100%);
     box-shadow: inset 4px 0 0 var(--accent-cyan);
     color: var(--accent-cyan);
   }
-  #score-tbody tr:hover:not(.active) {
+  #cricket-tbody tr:hover:not(.active), #mark10-tbody tr:hover:not(.active) {
     background-color: rgba(255, 255, 255, 0.05);
     cursor: pointer;
   }
 
-  /* コントロールボタン */
-  .controls {
+  /* コントロールボタン (Cricket) */
+  .controls-cricket {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 15px;
     margin-bottom: 30px;
   }
+  /* コントロールボタン (10-MARK: 4列) */
+  .controls-mark10 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 30px;
+  }
+
   button {
     padding: 16px 10px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
     border: none;
     border-radius: 10px;
@@ -145,6 +187,11 @@
     color: #fff; 
     box-shadow: 0 4px 15px rgba(241, 39, 17, 0.3);
   }
+  .btn-out {
+    background: linear-gradient(135deg, #475569, #334155);
+    color: var(--text-sub);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  }
   
   .btn-action {
     width: 100%;
@@ -161,6 +208,12 @@
   .btn-finish {
     background: linear-gradient(135deg, #1e3c72, #2a5298);
     box-shadow: 0 4px 15px rgba(42, 82, 152, 0.4);
+  }
+  .btn-menu {
+    background-color: var(--panel-bg);
+    border: 1px solid var(--text-sub);
+    color: var(--text-main);
+    margin-bottom: 25px;
   }
   .btn-history { 
     background-color: var(--panel-bg);
@@ -270,19 +323,16 @@
     color: var(--text-sub);
     margin-top: 4px;
   }
-  /* OVERALLのマーク数 (シアン) */
   .stat-avg-overall {
     font-size: 14px;
     font-weight: bold;
     color: var(--accent-cyan);
   }
-  /* DAILYのマーク数 (グリーン) */
   .stat-avg-daily {
     font-size: 14px;
     font-weight: bold;
     color: var(--accent-green);
   }
-  /* ヒット数は共通の落ち着いたグレートーン */
   .stat-hit {
     font-size: 14px;
     font-weight: bold;
@@ -378,13 +428,30 @@
 </head>
 <body>
 
-  <!-- ================= 練習画面 ================= -->
-  <div id="practice-view" class="view active">
-    <h1>Cricket Practice</h1>
+  <!-- ================= TOPメニュー画面 ================= -->
+  <div id="top-view" class="view active">
+    <h1>Darts Practice Menu</h1>
+    <div class="menu-container">
+      <div class="menu-card" onclick="switchView('cricket-practice-view')">
+        <h2>Cricket Count-Up</h2>
+        <p>各ターゲットを3投ずつプレイし、獲得マーク数を競う練習モード</p>
+      </div>
+      <div class="menu-card" onclick="switchView('mark10-practice-view')">
+        <h2>10-Mark</h2>
+        <p>各ターゲットを10マーク達成するまでにかかったダーツ本数を測定する練習モード</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================= CRICKET COUNT-UP 練習画面 ================= -->
+  <div id="cricket-practice-view" class="view">
+    <h1>Cricket Count-Up</h1>
+    <button class="btn-action btn-menu" onclick="switchView('top-view')">← MENU</button>
 
     <div class="info-panel">
-      <div><span id="current-date"></span></div>
-      <div>SET <span id="set-number" style="font-size: 18px;">1</span></div>
+      <div><span id="cricket-current-date"></span></div>
+      <div>SET <span id="cricket-set-number" style="font-size: 18px;">1</span></div>
     </div>
 
     <table>
@@ -395,65 +462,116 @@
           <th>Marks</th>
         </tr>
       </thead>
-      <tbody id="score-tbody">
+      <tbody id="cricket-tbody">
         <!-- 生成 -->
       </tbody>
     </table>
 
-    <div class="controls">
-      <button class="btn-single" onclick="recordHit(1)">Single</button>
-      <button class="btn-double" onclick="recordHit(2)">Double</button>
-      <button class="btn-triple" id="btn-triple" onclick="recordHit(3)">Triple</button>
+    <div class="controls-cricket">
+      <button class="btn-single" onclick="cricketRecordHit(1)">Single</button>
+      <button class="btn-double" onclick="cricketRecordHit(2)">Double</button>
+      <button class="btn-triple" id="cricket-btn-triple" onclick="cricketRecordHit(3)">Triple</button>
     </div>
 
-    <button class="btn-action btn-undo" onclick="undo()">UNDO (1投戻る)</button>
-    <button class="btn-action btn-finish" onclick="finishSet()">SAVE & NEXT SET</button>
-    <button class="btn-action btn-history" onclick="switchView('history-view')">PLAY DATA (履歴・分析)</button>
+    <button class="btn-action btn-undo" onclick="cricketUndo()">UNDO (1投戻る)</button>
+    <button class="btn-action btn-finish" onclick="cricketFinishSet()">SAVE & NEXT SET</button>
+    <button class="btn-action btn-history" onclick="switchView('cricket-history-view')">PLAY DATA (履歴・分析)</button>
   </div>
 
-  <!-- ================= 履歴画面 ================= -->
-  <div id="history-view" class="view">
-    <h1>Play Data</h1>
-    
-    <button class="btn-action btn-history" onclick="switchView('practice-view')" style="margin-bottom: 25px;">← BACK TO PLAY</button>
+  <!-- ================= CRICKET COUNT-UP 履歴画面 ================= -->
+  <div id="cricket-history-view" class="view">
+    <h1>Cricket Play Data</h1>
+    <button class="btn-action btn-menu" onclick="switchView('cricket-practice-view')" style="margin-bottom: 25px;">← BACK TO PLAY</button>
 
-    <!-- 全期間の平均スタッツパネル -->
-    <div class="stats-panel" id="stats-panel">
+    <div class="stats-panel" id="cricket-stats-panel">
       <h2>OVERALL AVERAGE (MARKS / HITS)</h2>
-      <div class="stats-subtitle" id="stats-subtitle">TOTAL SETS: 0</div>
-      <div class="stats-grid" id="stats-grid">
+      <div class="stats-subtitle" id="cricket-stats-subtitle">TOTAL SETS: 0</div>
+      <div class="stats-grid" id="cricket-stats-grid">
         <!-- 生成 -->
       </div>
     </div>
 
-    <!-- 日毎の履歴と平均 -->
-    <div id="history-container"></div>
+    <div id="cricket-history-container"></div>
 
-    <!-- 端末間同期（バックアップ・復元）セクション -->
     <div class="backup-card">
       <h3>デバイス間のデータ同期 (バックアップ)</h3>
-      <p>別の端末（スマホ・PC）へデータを移行する場合、現在の全データをファイルに書き出して読み込ませてください。</p>
-      
-      <button class="btn-action btn-sync" onclick="exportData()">データを書き出す (保存)</button>
-      
+      <p>別の端末へデータを移行する場合、現在の全データをファイルに書き出して読み込ませてください。</p>
+      <button class="btn-action btn-sync" onclick="cricketExportData()">データを書き出す (保存)</button>
       <div style="margin-top: 15px;">
-        <label class="file-upload-label" for="import-file">
-          データを読み込む (復元)
-        </label>
-        <input type="file" id="import-file" accept=".json" onchange="importData(event)">
+        <label class="file-upload-label" for="cricket-import-file">データを読み込む (復元)</label>
+        <input type="file" id="cricket-import-file" accept=".json" onchange="cricketImportData(event)">
       </div>
     </div>
 
-    <button class="btn-action btn-danger" onclick="clearHistory()">DELETE ALL DATA</button>
+    <button class="btn-action btn-danger" onclick="cricketClearHistory()">DELETE ALL DATA</button>
+  </div>
+
+
+  <!-- ================= 10-MARK 練習画面 ================= -->
+  <div id="mark10-practice-view" class="view">
+    <h1>10-Mark Practice</h1>
+    <button class="btn-action btn-menu" onclick="switchView('top-view')">← MENU</button>
+
+    <div class="info-panel">
+      <div><span id="mark10-current-date"></span></div>
+      <div>SET <span id="mark10-set-number" style="font-size: 18px;">1</span></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Target</th>
+          <th>Darts</th>
+          <th>Marks</th>
+        </tr>
+      </thead>
+      <tbody id="mark10-tbody">
+        <!-- 生成 -->
+      </tbody>
+    </table>
+
+    <div class="controls-mark10">
+      <button class="btn-out" onclick="mark10RecordHit(0)">Out</button>
+      <button class="btn-single" onclick="mark10RecordHit(1)">Single</button>
+      <button class="btn-double" onclick="mark10RecordHit(2)">Double</button>
+      <button class="btn-triple" id="mark10-btn-triple" onclick="mark10RecordHit(3)">Triple</button>
+    </div>
+
+    <button class="btn-action btn-undo" onclick="mark10Undo()">UNDO (1投戻る)</button>
+    <button class="btn-action btn-finish" onclick="mark10FinishSet()">SAVE & NEXT SET</button>
+    <button class="btn-action btn-history" onclick="switchView('mark10-history-view')">PLAY DATA (履歴・分析)</button>
+  </div>
+
+  <!-- ================= 10-MARK 履歴画面 ================= -->
+  <div id="mark10-history-view" class="view">
+    <h1>10-Mark Play Data</h1>
+    <button class="btn-action btn-menu" onclick="switchView('mark10-practice-view')" style="margin-bottom: 25px;">← BACK TO PLAY</button>
+
+    <div class="stats-panel" id="mark10-stats-panel">
+      <h2>OVERALL AVERAGE (DARTS TO 10 MARKS)</h2>
+      <div class="stats-subtitle" id="mark10-stats-subtitle">TOTAL SETS: 0</div>
+      <div class="stats-grid" id="mark10-stats-grid">
+        <!-- 生成 -->
+      </div>
+    </div>
+
+    <div id="mark10-history-container"></div>
+
+    <div class="backup-card">
+      <h3>デバイス間のデータ同期 (バックアップ)</h3>
+      <p>別の端末へデータを移行する場合、現在の全データをファイルに書き出して読み込ませてください。</p>
+      <button class="btn-action btn-sync" onclick="mark10ExportData()">データを書き出す (保存)</button>
+      <div style="margin-top: 15px;">
+        <label class="file-upload-label" for="mark10-import-file">データを読み込む (復元)</label>
+        <input type="file" id="mark10-import-file" accept=".json" onchange="mark10ImportData(event)">
+      </div>
+    </div>
+
+    <button class="btn-action btn-danger" onclick="mark10ClearHistory()">DELETE ALL DATA</button>
   </div>
 
 <script>
   const targetNumbers = ['20', '19', '18', '17', '16', '15', 'Bull'];
-  let currentSet = 1;
-  let activeNumber = '20';
-  let scores = {};
-  let historyStack = [];
-  let savedData = [];
 
   function getFormattedDate() {
     const d = new Date();
@@ -465,66 +583,67 @@
     return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
   }
 
-  function updateCurrentDateDisplay() {
+  function updateDateDisplays() {
     const d = new Date();
-    document.getElementById('current-date').textContent = d.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
-  }
-
-  function init() {
-    updateCurrentDateDisplay();
-    loadHistory();
-    initSet();
+    const dateStr = d.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    const cDateEl = document.getElementById('cricket-current-date');
+    const mDateEl = document.getElementById('mark10-current-date');
+    if (cDateEl) cDateEl.textContent = dateStr;
+    if (mDateEl) mDateEl.textContent = dateStr;
   }
 
   function switchView(viewId) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
     
-    if (viewId === 'practice-view') {
-      updateCurrentDateDisplay(); // 練習画面に戻った時にも日付を確実独更新
-    } else if (viewId === 'history-view') {
-      renderHistory();
+    if (viewId === 'cricket-practice-view' || viewId === 'mark10-practice-view') {
+      updateDateDisplays();
+    } else if (viewId === 'cricket-history-view') {
+      cricketRenderHistory();
+    } else if (viewId === 'mark10-history-view') {
+      mark10RenderHistory();
     }
   }
 
-  function initSet() {
-    scores = {};
+
+  /* ==========================================================
+     1. CRICKET COUNT-UP ロジック
+     ========================================================== */
+  let cricketCurrentSet = 1;
+  let cricketActiveNumber = '20';
+  let cricketScores = {};
+  let cricketHistoryStack = [];
+  let cricketSavedData = [];
+
+  function cricketInitSet() {
+    cricketScores = {};
     targetNumbers.forEach(num => {
-      scores[num] = { darts: 0, marks: 0 };
+      cricketScores[num] = { darts: 0, marks: 0 };
     });
-    activeNumber = '20';
-    historyStack = [];
-    document.getElementById('set-number').textContent = currentSet;
-    renderTable();
+    cricketActiveNumber = '20';
+    cricketHistoryStack = [];
+    document.getElementById('cricket-set-number').textContent = cricketCurrentSet;
+    cricketRenderTable();
   }
 
-  function renderTable() {
-    const tbody = document.getElementById('score-tbody');
+  function cricketRenderTable() {
+    const tbody = document.getElementById('cricket-tbody');
     tbody.innerHTML = '';
 
     targetNumbers.forEach(num => {
       const tr = document.createElement('tr');
-      if (num === activeNumber) {
-        tr.className = 'active';
-      }
-      
+      if (num === cricketActiveNumber) tr.className = 'active';
       tr.onclick = () => {
-        activeNumber = num;
-        renderTable();
+        cricketActiveNumber = num;
+        cricketRenderTable();
       };
 
       const tdNum = document.createElement('td');
       tdNum.textContent = num;
-      
       const tdDarts = document.createElement('td');
-      tdDarts.textContent = scores[num].darts;
-      
+      tdDarts.textContent = cricketScores[num].darts;
       const tdMarks = document.createElement('td');
-      tdMarks.textContent = scores[num].marks;
+      tdMarks.textContent = cricketScores[num].marks;
 
       tr.appendChild(tdNum);
       tr.appendChild(tdDarts);
@@ -532,174 +651,94 @@
       tbody.appendChild(tr);
     });
 
-    updateButtons();
-  }
-
-  function updateButtons() {
-    const isFull = scores[activeNumber].darts >= 3;
-    const isBull = activeNumber === 'Bull';
-    
-    const buttons = document.querySelectorAll('.controls button');
+    const isFull = cricketScores[cricketActiveNumber].darts >= 3;
+    const isBull = cricketActiveNumber === 'Bull';
+    const buttons = document.querySelectorAll('#cricket-practice-view .controls-cricket button');
     buttons.forEach(btn => btn.disabled = isFull);
-
     if (isBull) {
-      document.getElementById('btn-triple').disabled = true;
+      document.getElementById('cricket-btn-triple').disabled = true;
     }
   }
 
-  function recordHit(marks) {
-    if (scores[activeNumber].darts >= 3) return;
+  function cricketRecordHit(marks) {
+    if (cricketScores[cricketActiveNumber].darts >= 3) return;
 
-    historyStack.push({
-      num: activeNumber,
+    cricketHistoryStack.push({
+      num: cricketActiveNumber,
       marksAdded: marks
     });
 
-    scores[activeNumber].darts += 1;
-    scores[activeNumber].marks += marks;
+    cricketScores[cricketActiveNumber].darts += 1;
+    cricketScores[cricketActiveNumber].marks += marks;
 
-    if (scores[activeNumber].darts === 3) {
-      const currentIndex = targetNumbers.indexOf(activeNumber);
+    if (cricketScores[cricketActiveNumber].darts === 3) {
+      const currentIndex = targetNumbers.indexOf(cricketActiveNumber);
       if (currentIndex < targetNumbers.length - 1) {
-        activeNumber = targetNumbers[currentIndex + 1];
+        cricketActiveNumber = targetNumbers[currentIndex + 1];
       }
     }
-
-    renderTable();
+    cricketRenderTable();
   }
 
-  function undo() {
-    if (historyStack.length === 0) {
+  function cricketUndo() {
+    if (cricketHistoryStack.length === 0) {
       alert('取り消せる記録がありません。');
       return;
     }
-    
-    const lastAction = historyStack.pop();
-    activeNumber = lastAction.num;
-    scores[activeNumber].darts -= 1;
-    scores[activeNumber].marks -= lastAction.marksAdded;
-    
-    renderTable();
+    const lastAction = cricketHistoryStack.pop();
+    cricketActiveNumber = lastAction.num;
+    cricketScores[cricketActiveNumber].darts -= 1;
+    cricketScores[cricketActiveNumber].marks -= lastAction.marksAdded;
+    cricketRenderTable();
   }
 
-  function finishSet() {
-    if (confirm(`第${currentSet}セットの記録を保存して、次へ進みますか？`)) {
-      
+  function cricketFinishSet() {
+    if (confirm(`第${cricketCurrentSet}セットの記録を保存して、次へ進みますか？`)) {
       let totalMarks = 0;
-      targetNumbers.forEach(num => {
-        totalMarks += scores[num].marks;
-      });
+      targetNumbers.forEach(num => { totalMarks += cricketScores[num].marks; });
 
       const setData = {
         date: getFormattedDate(),
-        setNumber: currentSet,
-        scores: JSON.parse(JSON.stringify(scores)),
+        setNumber: cricketCurrentSet,
+        scores: JSON.parse(JSON.stringify(cricketScores)),
         totalMarks: totalMarks
       };
 
-      savedData.unshift(setData);
-      saveHistoryToStorage();
+      cricketSavedData.unshift(setData);
+      localStorage.setItem('dartsCricketHistory', JSON.stringify(cricketSavedData));
 
-      currentSet += 1;
-      initSet();
+      cricketCurrentSet += 1;
+      cricketInitSet();
     }
   }
 
-  function loadHistory() {
-    const data = localStorage.getItem('dartsCricketHistory');
-    if (data) {
-      savedData = JSON.parse(data);
-      if (savedData.length > 0) {
-        currentSet = savedData[0].setNumber + 1;
-      }
-    }
-  }
-
-  function saveHistoryToStorage() {
-    localStorage.setItem('dartsCricketHistory', JSON.stringify(savedData));
-  }
-
-  function exportData() {
-    if (savedData.length === 0) {
-      alert('書き出すデータがありません。');
-      return;
-    }
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(savedData));
-    const downloadAnchor = document.createElement('a');
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute("download", "darts_cricket_backup.json");
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
-  }
-
-  function importData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        const imported = JSON.parse(e.target.result);
-        if (Array.isArray(imported)) {
-          if (confirm(`読み込んだファイルには ${imported.length} 件のデータが含まれています。現在のデータに統合（または上書き）しますか？`)) {
-            savedData = imported;
-            saveHistoryToStorage();
-            if (savedData.length > 0) {
-              currentSet = savedData[0].setNumber + 1;
-            }
-            initSet();
-            renderHistory();
-            alert('データの読み込みが完了しました！');
-          }
-        } else {
-          alert('ファイルの形式が正しくありません。');
-        }
-      } catch (err) {
-        alert('ファイルの読み込みに失敗しました。');
-      }
-    };
-    reader.readAsText(file);
-    event.target.value = '';
-  }
-
-  function clearHistory() {
-    if (confirm('本当にすべての履歴を削除しますか？この操作は元に戻せません。')) {
-      savedData = [];
-      saveHistoryToStorage();
-      renderHistory();
-      currentSet = 1;
-      initSet();
-    }
-  }
-
-  function renderHistory() {
-    const container = document.getElementById('history-container');
-    const statsGrid = document.getElementById('stats-grid');
-    const statsPanel = document.getElementById('stats-panel');
-    const statsSubtitle = document.getElementById('stats-subtitle');
+  function cricketRenderHistory() {
+    const container = document.getElementById('cricket-history-container');
+    const statsGrid = document.getElementById('cricket-stats-grid');
+    const statsPanel = document.getElementById('cricket-stats-panel');
+    const statsSubtitle = document.getElementById('cricket-stats-subtitle');
     
     container.innerHTML = '';
     statsGrid.innerHTML = '';
 
-    if (savedData.length === 0) {
+    const dataStr = localStorage.getItem('dartsCricketHistory');
+    cricketSavedData = dataStr ? JSON.parse(dataStr) : [];
+
+    if (cricketSavedData.length === 0) {
       statsPanel.style.display = 'none';
       container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding: 20px 0;">NO DATA</p>';
       return;
     }
 
     statsPanel.style.display = 'block';
-    const totalSets = savedData.length;
+    const totalSets = cricketSavedData.length;
     statsSubtitle.textContent = `TOTAL SETS: ${totalSets}`;
 
     let overallMarks = {};
     let overallDarts = {};
-    targetNumbers.forEach(num => {
-      overallMarks[num] = 0;
-      overallDarts[num] = 0;
-    });
+    targetNumbers.forEach(num => { overallMarks[num] = 0; overallDarts[num] = 0; });
     
-    savedData.forEach(data => {
+    cricketSavedData.forEach(data => {
       targetNumbers.forEach(num => {
         overallMarks[num] += data.scores[num].marks;
         overallDarts[num] += data.scores[num].darts;
@@ -720,25 +759,17 @@
 
     const groupedData = {};
     const dateKeys = [];
-
-    savedData.forEach(data => {
+    cricketSavedData.forEach(data => {
       const dateOnly = data.date.split(' ')[0];
-      if (!groupedData[dateOnly]) {
-        groupedData[dateOnly] = [];
-        dateKeys.push(dateOnly);
-      }
+      if (!groupedData[dateOnly]) { groupedData[dateOnly] = []; dateKeys.push(dateOnly); }
       groupedData[dateOnly].push(data);
     });
 
     dateKeys.forEach(dateOnly => {
       const daySets = groupedData[dateOnly];
-      
       let dailyMarks = {};
       let dailyDarts = {};
-      targetNumbers.forEach(num => {
-        dailyMarks[num] = 0;
-        dailyDarts[num] = 0;
-      });
+      targetNumbers.forEach(num => { dailyMarks[num] = 0; dailyDarts[num] = 0; });
       daySets.forEach(set => {
         targetNumbers.forEach(num => {
           dailyMarks[num] += set.scores[num].marks;
@@ -748,13 +779,9 @@
 
       const dailyWrapper = document.createElement('div');
       dailyWrapper.className = 'daily-wrapper';
+      dailyWrapper.innerHTML = `<h2 class="daily-title">${dateOnly} (${daySets.length} SETS)</h2>`;
 
-      const dailyTitle = document.createElement('h2');
-      dailyTitle.className = 'daily-title';
-      dailyTitle.textContent = `${dateOnly} (${daySets.length} SETS)`;
-      dailyWrapper.appendChild(dailyTitle);
-
-      const dailyStatsPanel = document.createElement('div');
+      let dailyStatsPanel = document.createElement('div');
       dailyStatsPanel.className = 'stats-panel daily-stats-panel';
       let dailyStatsHtml = `<h3>DAILY AVERAGE (MARK / HIT)</h3><div class="stats-grid">`;
       targetNumbers.forEach(num => {
@@ -775,43 +802,360 @@
       daySets.forEach(data => {
         const card = document.createElement('div');
         card.className = 'history-card';
-
         const timeOnly = data.date.split(' ')[1] || '';
 
-        const header = document.createElement('div');
-        header.className = 'history-header';
-        header.innerHTML = `
-          <span style="font-weight:bold;">SET ${data.setNumber} <span class="history-time" style="margin-left:10px;">${timeOnly}</span></span>
-          <span style="font-weight:bold;">TOTAL: ${data.totalMarks}</span>
+        let headerHtml = `
+          <div class="history-header">
+            <span style="font-weight:bold;">SET ${data.setNumber} <span class="history-time" style="margin-left:10px;">${timeOnly}</span></span>
+            <span style="font-weight:bold;">TOTAL: ${data.totalMarks}</span>
+          </div>
         `;
-
-        const grid = document.createElement('div');
-        grid.className = 'history-grid';
-        
-        targetNumbers.forEach(num => {
-          grid.innerHTML += `<div style="color:var(--text-sub);">${num}</div>`;
-        });
-        grid.innerHTML += `<div class="total" style="color:var(--accent-cyan);">TOTAL</div>`;
+        let gridHtml = `<div class="history-grid">`;
+        targetNumbers.forEach(num => { gridHtml += `<div style="color:var(--text-sub);">${num}</div>`; });
+        gridHtml += `<div class="total" style="color:var(--accent-cyan);">TOTAL</div>`;
 
         targetNumbers.forEach(num => {
-          const marks = data.scores[num].marks;
-          const hits = data.scores[num].darts;
-          grid.innerHTML += `
-            <div>
-              <span style="font-weight:bold; font-size:14px; color:var(--text-main);">${marks}</span>
-              <span class="hit-count">(${hits}hit)</span>
-            </div>
-          `;
+          gridHtml += `<div><span style="font-weight:bold; font-size:14px; color:var(--text-main);">${data.scores[num].marks}</span><span class="hit-count">(${data.scores[num].darts}hit)</span></div>`;
         });
-        grid.innerHTML += `<div class="total" style="font-size:14px; font-weight:bold;">${data.totalMarks}</div>`;
+        gridHtml += `<div class="total" style="font-size:14px; font-weight:bold;">${data.totalMarks}</div></div>`;
 
-        card.appendChild(header);
-        card.appendChild(grid);
+        card.innerHTML = headerHtml + gridHtml;
         dailyWrapper.appendChild(card);
       });
-
       container.appendChild(dailyWrapper);
     });
+  }
+
+  function cricketExportData() {
+    const dataStr = localStorage.getItem('dartsCricketHistory');
+    if (!dataStr || JSON.parse(dataStr).length === 0) { alert('書き出すデータがありません。'); return; }
+    const blob = new DataView("data:text/json;charset=utf-8," + encodeURIComponent(dataStr));
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(dataStr);
+    a.download = "cricket_countup_backup.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  function cricketImportData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (Array.isArray(imported)) {
+          if (confirm(`読み込んだファイルには ${imported.length} 件のデータが含まれています。統合（上書き）しますか？`)) {
+            localStorage.setItem('dartsCricketHistory', JSON.stringify(imported));
+            cricketCurrentSet = imported.length > 0 ? imported[0].setNumber + 1 : 1;
+            cricketInitSet();
+            cricketRenderHistory();
+            alert('読み込みが完了しました！');
+          }
+        } else { alert('形式が正しくありません。'); }
+      } catch (err) { alert('読み込みに失敗しました。'); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function cricketClearHistory() {
+    if (confirm('すべてのCricket履歴を削除しますか？')) {
+      localStorage.removeItem('dartsCricketHistory');
+      cricketSavedData = [];
+      cricketCurrentSet = 1;
+      cricketInitSet();
+      cricketRenderHistory();
+    }
+  }
+
+
+  /* ==========================================================
+     2. 10-MARK ロジック
+     ========================================================== */
+  const MARK_TARGET = 10;
+  let mark10CurrentSet = 1;
+  let mark10ActiveNumber = '20';
+  let mark10Scores = {};
+  let mark10HistoryStack = [];
+  let mark10SavedData = [];
+
+  function mark10InitSet() {
+    mark10Scores = {};
+    targetNumbers.forEach(num => {
+      mark10Scores[num] = { darts: 0, marks: 0 };
+    });
+    mark10ActiveNumber = '20';
+    mark10HistoryStack = [];
+    document.getElementById('mark10-set-number').textContent = mark10CurrentSet;
+    mark10RenderTable();
+  }
+
+  function mark10RenderTable() {
+    const tbody = document.getElementById('mark10-tbody');
+    tbody.innerHTML = '';
+
+    targetNumbers.forEach(num => {
+      const tr = document.createElement('tr');
+      if (num === mark10ActiveNumber) tr.className = 'active';
+      tr.onclick = () => {
+        mark10ActiveNumber = num;
+        mark10RenderTable();
+      };
+
+      const tdNum = document.createElement('td');
+      tdNum.textContent = num;
+      const tdDarts = document.createElement('td');
+      tdDarts.textContent = mark10Scores[num].darts;
+      const tdMarks = document.createElement('td');
+      tdMarks.textContent = `${mark10Scores[num].marks} / ${MARK_TARGET}`;
+
+      tr.appendChild(tdNum);
+      tr.appendChild(tdDarts);
+      tr.appendChild(tdMarks);
+      tbody.appendChild(tr);
+    });
+
+    const isComplete = mark10Scores[mark10ActiveNumber].marks >= MARK_TARGET;
+    const isBull = mark10ActiveNumber === 'Bull';
+    
+    // Out, Single, Double, Triple の有効/無効制御
+    document.querySelectorAll('#mark10-practice-view .controls-mark10 button').forEach(btn => btn.disabled = isComplete);
+    if (isBull) {
+      document.getElementById('mark10-btn-triple').disabled = true;
+    }
+  }
+
+  function mark10RecordHit(marks) {
+    if (mark10Scores[mark10ActiveNumber].marks >= MARK_TARGET) return;
+
+    mark10HistoryStack.push({
+      num: mark10ActiveNumber,
+      marksAdded: marks
+    });
+
+    mark10Scores[mark10ActiveNumber].darts += 1;
+    mark10Scores[mark10ActiveNumber].marks += marks;
+
+    // もし10マークを超えた場合の補正（ぴったり10マークに調整する仕様、またはそのまま保持。ここではそのまま、あるいは次のナンバーへ）
+    if (mark10Scores[mark10ActiveNumber].marks >= MARK_TARGET) {
+      const currentIndex = targetNumbers.indexOf(mark10ActiveNumber);
+      if (currentIndex < targetNumbers.length - 1) {
+        mark10ActiveNumber = targetNumbers[currentIndex + 1];
+      }
+    }
+    mark10RenderTable();
+  }
+
+  function mark10Undo() {
+    if (mark10HistoryStack.length === 0) {
+      alert('取り消せる記録がありません。');
+      return;
+    }
+    const lastAction = mark10HistoryStack.pop();
+    mark10ActiveNumber = lastAction.num;
+    mark10Scores[mark10ActiveNumber].darts -= 1;
+    mark10Scores[mark10ActiveNumber].marks -= lastAction.marksAdded;
+    mark10RenderTable();
+  }
+
+  function mark10FinishSet() {
+    // 全ターゲットが10マークに達しているか確認
+    const allDone = targetNumbers.every(num => mark10Scores[num].marks >= MARK_TARGET);
+    if (!allDone) {
+      if (!confirm('まだ10マークに達していないナンバーがありますが、セットを保存して次へ進みますか？')) {
+        return;
+      }
+    }
+
+    if (confirm(`第${mark10CurrentSet}セットの記録を保存して、次へ進みますか？`)) {
+      let totalDarts = 0;
+      targetNumbers.forEach(num => { totalDarts += mark10Scores[num].darts; });
+
+      const setData = {
+        date: getFormattedDate(),
+        setNumber: mark10CurrentSet,
+        scores: JSON.parse(JSON.stringify(mark10Scores)),
+        totalDarts: totalDarts
+      };
+
+      mark10SavedData.unshift(setData);
+      localStorage.setItem('darts10MarkHistory', JSON.stringify(mark10SavedData));
+
+      mark10CurrentSet += 1;
+      mark10InitSet();
+    }
+  }
+
+  function mark10RenderHistory() {
+    const container = document.getElementById('mark10-history-container');
+    const statsGrid = document.getElementById('mark10-stats-grid');
+    const statsPanel = document.getElementById('mark10-stats-panel');
+    const statsSubtitle = document.getElementById('mark10-stats-subtitle');
+    
+    container.innerHTML = '';
+    statsGrid.innerHTML = '';
+
+    const dataStr = localStorage.getItem('darts10MarkHistory');
+    mark10SavedData = dataStr ? JSON.parse(dataStr) : [];
+
+    if (mark10SavedData.length === 0) {
+      statsPanel.style.display = 'none';
+      container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding: 20px 0;">NO DATA</p>';
+      return;
+    }
+
+    statsPanel.style.display = 'block';
+    const totalSets = mark10SavedData.length;
+    statsSubtitle.textContent = `TOTAL SETS: ${totalSets}`;
+
+    let overallDarts = {};
+    targetNumbers.forEach(num => { overallDarts[num] = 0; });
+    
+    mark10SavedData.forEach(data => {
+      targetNumbers.forEach(num => {
+        overallDarts[num] += data.scores[num].darts;
+      });
+    });
+
+    targetNumbers.forEach(num => {
+      const avgDarts = (overallDarts[num] / totalSets).toFixed(1);
+      statsGrid.innerHTML += `
+        <div class="stat-item">
+          <div class="stat-num">${num}</div>
+          <div class="stat-row">Avg Darts</div>
+          <div class="stat-avg-overall" style="margin-top:4px;">${avgDarts}</div>
+        </div>
+      `;
+    });
+
+    const groupedData = {};
+    const dateKeys = [];
+    mark10SavedData.forEach(data => {
+      const dateOnly = data.date.split(' ')[0];
+      if (!groupedData[dateOnly]) { groupedData[dateOnly] = []; dateKeys.push(dateOnly); }
+      groupedData[dateOnly].push(data);
+    });
+
+    dateKeys.forEach(dateOnly => {
+      const daySets = groupedData[dateOnly];
+      let dailyDarts = {};
+      targetNumbers.forEach(num => { dailyDarts[num] = 0; });
+      daySets.forEach(set => {
+        targetNumbers.forEach(num => { dailyDarts[num] += set.scores[num].darts; });
+      });
+
+      const dailyWrapper = document.createElement('div');
+      dailyWrapper.className = 'daily-wrapper';
+      dailyWrapper.innerHTML = `<h2 class="daily-title">${dateOnly} (${daySets.length} SETS)</h2>`;
+
+      let dailyStatsPanel = document.createElement('div');
+      dailyStatsPanel.className = 'stats-panel daily-stats-panel';
+      let dailyStatsHtml = `<h3>DAILY AVERAGE (DARTS)</h3><div class="stats-grid">`;
+      targetNumbers.forEach(num => {
+        const avgDarts = (dailyDarts[num] / daySets.length).toFixed(1);
+        dailyStatsHtml += `
+          <div class="stat-item">
+            <div class="stat-num">${num}</div>
+            <div class="stat-row">Avg Darts</div>
+            <div class="stat-avg-daily" style="margin-top:4px;">${avgDarts}</div>
+          </div>
+        `;
+      });
+      dailyStatsHtml += `</div>`;
+      dailyStatsPanel.innerHTML = dailyStatsHtml;
+      dailyWrapper.appendChild(dailyStatsPanel);
+
+      daySets.forEach(data => {
+        const card = document.createElement('div');
+        card.className = 'history-card';
+        const timeOnly = data.date.split(' ')[1] || '';
+
+        let headerHtml = `
+          <div class="history-header">
+            <span style="font-weight:bold;">SET ${data.setNumber} <span class="history-time" style="margin-left:10px;">${timeOnly}</span></span>
+            <span style="font-weight:bold;">TOTAL DARTS: ${data.totalDarts}</span>
+          </div>
+        `;
+        let gridHtml = `<div class="history-grid">`;
+        targetNumbers.forEach(num => { gridHtml += `<div style="color:var(--text-sub);">${num}</div>`; });
+        gridHtml += `<div class="total" style="color:var(--accent-cyan);">TOTAL</div>`;
+
+        targetNumbers.forEach(num => {
+          gridHtml += `<div><span style="font-weight:bold; font-size:14px; color:var(--text-main);">${data.scores[num].darts}</span><span class="hit-count">darts</span></div>`;
+        });
+        gridHtml += `<div class="total" style="font-size:14px; font-weight:bold;">${data.totalDarts}</div></div>`;
+
+        card.innerHTML = headerHtml + gridHtml;
+        dailyWrapper.appendChild(card);
+      });
+      container.appendChild(dailyWrapper);
+    });
+  }
+
+  function mark10ExportData() {
+    const dataStr = localStorage.getItem('darts10MarkHistory');
+    if (!dataStr || JSON.parse(dataStr).length === 0) { alert('書き出すデータがありません。'); return; }
+    const a = document.createElement('a');
+    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(dataStr);
+    a.download = "10mark_backup.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  function mark10ImportData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (Array.isArray(imported)) {
+          if (confirm(`読み込んだファイルには ${imported.length} 件のデータが含まれています。統合（上書き）しますか？`)) {
+            localStorage.setItem('darts10MarkHistory', JSON.stringify(imported));
+            mark10CurrentSet = imported.length > 0 ? imported[0].setNumber + 1 : 1;
+            mark10InitSet();
+            mark10RenderHistory();
+            alert('読み込みが完了しました！');
+          }
+        } else { alert('形式が正しくありません。'); }
+      } catch (err) { alert('読み込みに失敗しました。'); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function mark10ClearHistory() {
+    if (confirm('すべての10-Mark履歴を削除しますか？')) {
+      localStorage.removeItem('darts10MarkHistory');
+      mark10SavedData = [];
+      mark10CurrentSet = 1;
+      mark10InitSet();
+      mark10RenderHistory();
+    }
+  }
+
+  // 初期化実行
+  function init() {
+    updateDateDisplays();
+    
+    // Cricket読み込み
+    const cData = localStorage.getItem('dartsCricketHistory');
+    if (cData) {
+      cricketSavedData = JSON.parse(cData);
+      if (cricketSavedData.length > 0) cricketCurrentSet = cricketSavedData[0].setNumber + 1;
+    }
+    cricketInitSet();
+
+    // 10-Mark読み込み
+    const mData = localStorage.getItem('darts10MarkHistory');
+    if (mData) {
+      mark10SavedData = JSON.parse(mData);
+      if (mark10SavedData.length > 0) mark10CurrentSet = mark10SavedData[0].setNumber + 1;
+    }
+    mark10InitSet();
   }
 
   init();
