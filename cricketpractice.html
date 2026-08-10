@@ -829,10 +829,10 @@
   function cricketExportData() {
     const dataStr = localStorage.getItem('dartsCricketHistory');
     if (!dataStr || JSON.parse(dataStr).length === 0) { alert('書き出すデータがありません。'); return; }
-    const blob = new DataView("data:text/json;charset=utf-8," + encodeURIComponent(dataStr));
+    const dataUri = "data:text/json;charset=utf-8," + encodeURIComponent(dataStr);
     const a = document.createElement('a');
-    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(dataStr);
-    a.download = "cricket_countup_backup.json";
+    a.setAttribute("href", dataUri);
+    a.setAttribute("download", "cricket_countup_backup.json");
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -920,7 +920,6 @@
     const isComplete = mark10Scores[mark10ActiveNumber].marks >= MARK_TARGET;
     const isBull = mark10ActiveNumber === 'Bull';
     
-    // Out, Single, Double, Triple の有効/無効制御
     document.querySelectorAll('#mark10-practice-view .controls-mark10 button').forEach(btn => btn.disabled = isComplete);
     if (isBull) {
       document.getElementById('mark10-btn-triple').disabled = true;
@@ -938,7 +937,6 @@
     mark10Scores[mark10ActiveNumber].darts += 1;
     mark10Scores[mark10ActiveNumber].marks += marks;
 
-    // もし10マークを超えた場合の補正（ぴったり10マークに調整する仕様、またはそのまま保持。ここではそのまま、あるいは次のナンバーへ）
     if (mark10Scores[mark10ActiveNumber].marks >= MARK_TARGET) {
       const currentIndex = targetNumbers.indexOf(mark10ActiveNumber);
       if (currentIndex < targetNumbers.length - 1) {
@@ -961,7 +959,6 @@
   }
 
   function mark10FinishSet() {
-    // 全ターゲットが10マークに達しているか確認
     const allDone = targetNumbers.every(num => mark10Scores[num].marks >= MARK_TARGET);
     if (!allDone) {
       if (!confirm('まだ10マークに達していないナンバーがありますが、セットを保存して次へ進みますか？')) {
@@ -1097,9 +1094,10 @@
   function mark10ExportData() {
     const dataStr = localStorage.getItem('darts10MarkHistory');
     if (!dataStr || JSON.parse(dataStr).length === 0) { alert('書き出すデータがありません。'); return; }
+    const dataUri = "data:text/json;charset=utf-8," + encodeURIComponent(dataStr);
     const a = document.createElement('a');
-    a.href = "data:text/json;charset=utf-8," + encodeURIComponent(dataStr);
-    a.download = "10mark_backup.json";
+    a.setAttribute("href", dataUri);
+    a.setAttribute("download", "10mark_backup.json");
     document.body.appendChild(a);
     a.click();
     a.remove();
