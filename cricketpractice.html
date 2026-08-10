@@ -236,6 +236,13 @@
     font-size: 14px;
     color: var(--text-sub);
     text-align: center;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+  }
+  .stats-subtitle {
+    font-size: 11px;
+    color: var(--accent-cyan);
+    text-align: center;
     margin-bottom: 20px;
     letter-spacing: 1px;
   }
@@ -413,6 +420,7 @@
     <!-- 全期間の平均スタッツパネル -->
     <div class="stats-panel" id="stats-panel">
       <h2>OVERALL AVERAGE (MARKS / HITS)</h2>
+      <div class="stats-subtitle" id="stats-subtitle">TOTAL SETS: 0</div>
       <div class="stats-grid" id="stats-grid">
         <!-- 生成 -->
       </div>
@@ -457,8 +465,17 @@
     return `${yyyy}/${mm}/${dd} ${hh}:${min}`;
   }
 
+  function updateCurrentDateDisplay() {
+    const d = new Date();
+    document.getElementById('current-date').textContent = d.toLocaleDateString('ja-JP', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  }
+
   function init() {
-    document.getElementById('current-date').textContent = new Date().toLocaleDateString('ja-JP');
+    updateCurrentDateDisplay();
     loadHistory();
     initSet();
   }
@@ -466,7 +483,10 @@
   function switchView(viewId) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
-    if (viewId === 'history-view') {
+    
+    if (viewId === 'practice-view') {
+      updateCurrentDateDisplay(); // 練習画面に戻った時にも日付を確実独更新
+    } else if (viewId === 'history-view') {
       renderHistory();
     }
   }
@@ -657,6 +677,7 @@
     const container = document.getElementById('history-container');
     const statsGrid = document.getElementById('stats-grid');
     const statsPanel = document.getElementById('stats-panel');
+    const statsSubtitle = document.getElementById('stats-subtitle');
     
     container.innerHTML = '';
     statsGrid.innerHTML = '';
@@ -668,6 +689,8 @@
     }
 
     statsPanel.style.display = 'block';
+    const totalSets = savedData.length;
+    statsSubtitle.textContent = `TOTAL SETS: ${totalSets}`;
 
     let overallMarks = {};
     let overallDarts = {};
@@ -683,7 +706,6 @@
       });
     });
 
-    const totalSets = savedData.length;
     targetNumbers.forEach(num => {
       const avgMarks = (overallMarks[num] / totalSets).toFixed(2);
       const avgHits = (overallDarts[num] / totalSets).toFixed(2);
