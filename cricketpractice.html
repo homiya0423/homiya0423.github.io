@@ -432,14 +432,14 @@
     margin-top: 4px;
   }
 
-  /* Bull-99用履歴グリッド */
+  /* Bull-99用履歴グリッド（Phase, OUT, SINGLE, DOUBLE, BULLS, TOTALの計6列） */
   .history-grid-bull99 {
     display: grid;
-    grid-template-columns: 80px repeat(4, minmax(50px, 1fr));
+    grid-template-columns: 80px repeat(5, minmax(45px, 1fr));
     font-size: 11px;
     text-align: center;
     gap: 4px;
-    min-width: 320px;
+    min-width: 340px;
   }
   .history-grid-bull99 div {
     background: rgba(255,255,255,0.03);
@@ -623,6 +623,7 @@
           <th>OUT</th>
           <th>SINGLE</th>
           <th>DOUBLE</th>
+          <th>BULLS</th>
         </tr>
       </thead>
       <tbody id="bull99-tbody">
@@ -647,7 +648,7 @@
     <button class="btn-action btn-menu" onclick="switchView('bull99-practice-view')" style="margin-bottom: 25px;">← BACK TO PLAY</button>
 
     <div class="stats-panel" id="bull99-stats-panel">
-      <h2>OVERALL AVERAGE (HITS / TOTAL)</h2>
+      <h2>OVERALL AVERAGE (HIT RATE)</h2>
       <div class="stats-subtitle" id="bull99-stats-subtitle">TOTAL SETS: 0</div>
       <div class="stats-grid" id="bull99-stats-grid">
         <!-- 生成 -->
@@ -1276,19 +1277,26 @@
         bull99RenderTable();
       };
 
+      const s = bull99Scores[p.id];
+      const bullsTotal = s.single + s.double;
+
       const tdName = document.createElement('td');
       tdName.textContent = p.name;
       const tdOut = document.createElement('td');
-      tdOut.textContent = bull99Scores[p.id].out;
+      tdOut.textContent = s.out;
       const tdSingle = document.createElement('td');
-      tdSingle.textContent = bull99Scores[p.id].single;
+      tdSingle.textContent = s.single;
       const tdDouble = document.createElement('td');
-      tdDouble.textContent = bull99Scores[p.id].double;
+      tdDouble.textContent = s.double;
+      const tdBulls = document.createElement('td');
+      tdBulls.textContent = bullsTotal;
+      tdBulls.style.color = 'var(--accent-cyan)';
 
       tr.appendChild(tdName);
       tr.appendChild(tdOut);
       tr.appendChild(tdSingle);
       tr.appendChild(tdDouble);
+      tr.appendChild(tdBulls);
       tbody.appendChild(tr);
     });
 
@@ -1311,7 +1319,6 @@
     else if (type === 1) bull99Scores[activePhaseId].single += 1;
     else if (type === 2) bull99Scores[activePhaseId].double += 1;
 
-    // 現在のフェーズの投数が33投に達したら次のフェーズへ自動進行
     const pScores = bull99Scores[activePhaseId];
     const phaseDarts = pScores.out + pScores.single + pScores.double;
     if (phaseDarts >= 33 && bull99ActivePhaseIndex < BULL99_PHASES.length - 1) {
@@ -1391,28 +1398,21 @@
     statsSubtitle.textContent = `TOTAL SETS: ${totalSets}`;
 
     let overallHits = 0;
-    let overallScore = 0;
-    let phaseOverallHits = { early: 0, middle: 0, late: 0 };
+    let overallDarts = 0;
 
     bull99SavedData.forEach(data => {
       overallHits += data.totalHits;
-      overallScore += data.totalScore;
-      BULL99_PHASES.forEach(p => {
-        phaseOverallHits[p.id] += (data.scores[p.id].single + data.scores[p.id].double);
-      });
+      overallDarts += data.totalDarts;
     });
 
+    // 平均ヒット率の計算（総ヒット数 ÷ 総ダーツ数 × 100）
+    const overallHitRate = overallDarts > 0 ? ((overallHits / overallDarts) * 100).toFixed(1) : '0.0';
     const avgHits = (overallHits / totalSets).toFixed(1);
-    const avgScore = (overallScore / totalSets).toFixed(1);
 
     statsGrid.innerHTML = `
       <div class="stat-item" style="grid-column: span 2;">
-        <div class="stat-num">Average Hits</div>
-        <div class="stat-row"><span class="stat-avg-overall">${avgHits} / 99</span></div>
-      </div>
-      <div class="stat-item" style="grid-column: span 2;">
-        <div class="stat-num">Average Score</div>
-        <div class="stat-row"><span class="stat-avg-overall">${avgScore} pts</span></div>
+        <div class="stat-num">Average Hit Rate</div>
+        <div class="stat-row"><span class="stat-avg-overall">${overallHitRate}%</span> <span style="font-size:8px; color:var(--text-sub);">(${avgHits} hits/set)</span></div>
       </div>
     `;
 
@@ -1422,10 +1422,13 @@
       const timeOnly = data.date.split(' ')[1] || '';
       const dateOnly = data.date.split(' ')[0] || '';
 
+      // セットごとのヒット率計算
+      const setHitRate = data.totalDarts > 0 ? ((data.totalHits / data.totalDarts) * 100).toFixed(1) : '0.0';
+
       let headerHtml = `
         <div class="history-header">
           <span style="font-weight:bold;">SET ${data.setNumber} <span class="history-time" style="margin-left:10px;">${dateOnly} ${timeOnly}</span></span>
-          <span style="font-weight:bold;">HITS: ${data.totalHits} / ${data.totalDarts} (Score: ${data.totalScore})</span>
+          <span style="font-weight:bold;">HITS: ${data.totalHits} / ${data.totalDarts} <span style="color:var(--accent-cyan);">(${setHitRate}%)</span></span>
         </div>
       `;
 
@@ -1434,6 +1437,7 @@
         <div>OUT</div>
         <div>SINGLE</div>
         <div>DOUBLE</div>
+        <div>BULLS</div>
         <div>TOTAL</div>
       `;
 
@@ -1446,7 +1450,8 @@
           <div>${s.out}</div>
           <div>${s.single}</div>
           <div>${s.double}</div>
-          <div class="total-col">${pHits} (${pTotal})</div>
+          <div style="color:var(--accent-cyan); font-weight:bold;">${pHits}</div>
+          <div class="total-col">${pTotal}</div>
         `;
       });
 
