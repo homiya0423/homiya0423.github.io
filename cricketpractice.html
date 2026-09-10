@@ -105,32 +105,32 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
   }
   th, td {
-    padding: 14px 12px;
+    padding: 14px 10px;
     text-align: center;
     border-bottom: 1px solid var(--panel-border);
   }
   th {
     background-color: rgba(255, 255, 255, 0.03);
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-sub);
     text-transform: uppercase;
     letter-spacing: 1px;
   }
   td {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: bold;
   }
   
   /* 練習画面のアクティブ行 */
-  #cricket-tbody tr, #mark10-tbody tr {
+  #cricket-tbody tr, #mark10-tbody tr, #bull99-tbody tr {
     transition: background-color 0.2s;
   }
-  #cricket-tbody tr.active, #mark10-tbody tr.active {
+  #cricket-tbody tr.active, #mark10-tbody tr.active, #bull99-tbody tr.active {
     background: linear-gradient(90deg, rgba(0, 240, 255, 0.15) 0%, rgba(0, 240, 255, 0) 100%);
     box-shadow: inset 4px 0 0 var(--accent-cyan);
     color: var(--accent-cyan);
   }
-  #cricket-tbody tr:hover:not(.active), #mark10-tbody tr:hover:not(.active) {
+  #cricket-tbody tr:hover:not(.active), #mark10-tbody tr:hover:not(.active), #bull99-tbody tr:hover:not(.active) {
     background-color: rgba(255, 255, 255, 0.05);
     cursor: pointer;
   }
@@ -147,6 +147,13 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 10px;
+    margin-bottom: 30px;
+  }
+  /* コントロールボタン (Bull-99: 3列 Out/Single/Double) */
+  .controls-bull99 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
     margin-bottom: 30px;
   }
 
@@ -324,17 +331,17 @@
     margin-top: 4px;
   }
   .stat-avg-overall {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     color: var(--accent-cyan);
   }
   .stat-avg-daily {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     color: var(--accent-green);
   }
   .stat-hit {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     color: #cbd5e1;
   }
@@ -424,6 +431,30 @@
     color: var(--text-sub);
     margin-top: 4px;
   }
+
+  /* Bull-99用履歴グリッド */
+  .history-grid-bull99 {
+    display: grid;
+    grid-template-columns: 80px repeat(4, minmax(50px, 1fr));
+    font-size: 11px;
+    text-align: center;
+    gap: 4px;
+    min-width: 320px;
+  }
+  .history-grid-bull99 div {
+    background: rgba(255,255,255,0.03);
+    padding: 8px 2px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.02);
+  }
+  .history-grid-bull99 .total-col {
+    background: rgba(0, 240, 255, 0.1);
+    color: var(--accent-cyan);
+    border-color: rgba(0, 240, 255, 0.2);
+  }
 </style>
 </head>
 <body>
@@ -439,6 +470,10 @@
       <div class="menu-card" onclick="switchView('mark10-practice-view')">
         <h2>10-Mark</h2>
         <p>各ターゲットを10マーク達成するまでにかかったダーツ本数を測定する練習モード</p>
+      </div>
+      <div class="menu-card" onclick="switchView('bull99-practice-view')">
+        <h2>Bull-99</h2>
+        <p>99投してBullに入った本数（Early/Middle/Late）を記録するチャレンジモード</p>
       </div>
     </div>
   </div>
@@ -570,6 +605,70 @@
     <button class="btn-action btn-danger" onclick="mark10ClearHistory()">DELETE ALL DATA</button>
   </div>
 
+
+  <!-- ================= BULL-99 練習画面 ================= -->
+  <div id="bull99-practice-view" class="view">
+    <h1>Bull-99 Challenge</h1>
+    <button class="btn-action btn-menu" onclick="switchView('top-view')">← MENU</button>
+
+    <div class="info-panel">
+      <div><span id="bull99-current-date"></span></div>
+      <div>SET <span id="bull99-set-number" style="font-size: 18px;">1</span></div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Phase</th>
+          <th>OUT</th>
+          <th>SINGLE</th>
+          <th>DOUBLE</th>
+        </tr>
+      </thead>
+      <tbody id="bull99-tbody">
+        <!-- 生成 -->
+      </tbody>
+    </table>
+
+    <div class="controls-bull99">
+      <button class="btn-out" onclick="bull99RecordHit(0)">Out</button>
+      <button class="btn-single" onclick="bull99RecordHit(1)">Single</button>
+      <button class="btn-double" onclick="bull99RecordHit(2)">Double</button>
+    </div>
+
+    <button class="btn-action btn-undo" onclick="bull99Undo()">UNDO (1投戻る)</button>
+    <button class="btn-action btn-finish" onclick="bull99FinishSet()">SAVE & NEXT SET</button>
+    <button class="btn-action btn-history" onclick="switchView('bull99-history-view')">PLAY DATA (履歴・分析)</button>
+  </div>
+
+  <!-- ================= BULL-99 履歴画面 ================= -->
+  <div id="bull99-history-view" class="view">
+    <h1>Bull-99 Play Data</h1>
+    <button class="btn-action btn-menu" onclick="switchView('bull99-practice-view')" style="margin-bottom: 25px;">← BACK TO PLAY</button>
+
+    <div class="stats-panel" id="bull99-stats-panel">
+      <h2>OVERALL AVERAGE (HITS / TOTAL)</h2>
+      <div class="stats-subtitle" id="bull99-stats-subtitle">TOTAL SETS: 0</div>
+      <div class="stats-grid" id="bull99-stats-grid">
+        <!-- 生成 -->
+      </div>
+    </div>
+
+    <div id="bull99-history-container"></div>
+
+    <div class="backup-card">
+      <h3>デバイス間のデータ同期 (バックアップ)</h3>
+      <p>別の端末へデータを移行する場合、現在の全データをファイルに書き出して読み込ませてください。</p>
+      <button class="btn-action btn-sync" onclick="bull99ExportData()">データを書き出す (保存)</button>
+      <div style="margin-top: 15px;">
+        <label class="file-upload-label" for="bull99-import-file">データを読み込む (復元)</label>
+        <input type="file" id="bull99-import-file" accept=".json" onchange="bull99ImportData(event)">
+      </div>
+    </div>
+
+    <button class="btn-action btn-danger" onclick="bull99ClearHistory()">DELETE ALL DATA</button>
+  </div>
+
 <script>
   const targetNumbers = ['20', '19', '18', '17', '16', '15', 'Bull'];
 
@@ -588,20 +687,24 @@
     const dateStr = d.toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
     const cDateEl = document.getElementById('cricket-current-date');
     const mDateEl = document.getElementById('mark10-current-date');
+    const bDateEl = document.getElementById('bull99-current-date');
     if (cDateEl) cDateEl.textContent = dateStr;
     if (mDateEl) mDateEl.textContent = dateStr;
+    if (bDateEl) bDateEl.textContent = dateStr;
   }
 
   function switchView(viewId) {
     document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
     document.getElementById(viewId).classList.add('active');
     
-    if (viewId === 'cricket-practice-view' || viewId === 'mark10-practice-view') {
+    if (viewId === 'cricket-practice-view' || viewId === 'mark10-practice-view' || viewId === 'bull99-practice-view') {
       updateDateDisplays();
     } else if (viewId === 'cricket-history-view') {
       cricketRenderHistory();
     } else if (viewId === 'mark10-history-view') {
       mark10RenderHistory();
+    } else if (viewId === 'bull99-history-view') {
+      bull99RenderHistory();
     }
   }
 
@@ -846,7 +949,7 @@
       try {
         const imported = JSON.parse(e.target.result);
         if (Array.isArray(imported)) {
-          if (confirm(`読み込んだファイルには ${imported.length} 件のデータが含まれています。統合（上書き）しますか？`)) {
+          if (confirm(`読み込んだファイルには ${imported.length} 件のデータが含まれています。上書きしますか？`)) {
             localStorage.setItem('dartsCricketHistory', JSON.stringify(imported));
             cricketCurrentSet = imported.length > 0 ? imported[0].setNumber + 1 : 1;
             cricketInitSet();
@@ -959,13 +1062,6 @@
   }
 
   function mark10FinishSet() {
-    const allDone = targetNumbers.every(num => mark10Scores[num].marks >= MARK_TARGET);
-    if (!allDone) {
-      if (!confirm('まだ10マークに達していないナンバーがありますが、セットを保存して次へ進みますか？')) {
-        return;
-      }
-    }
-
     if (confirm(`第${mark10CurrentSet}セットの記録を保存して、次へ進みますか？`)) {
       let totalDarts = 0;
       targetNumbers.forEach(num => { totalDarts += mark10Scores[num].darts; });
@@ -978,7 +1074,7 @@
       };
 
       mark10SavedData.unshift(setData);
-      localStorage.setItem('darts10MarkHistory', JSON.stringify(mark10SavedData));
+      localStorage.setItem('dartsMark10History', JSON.stringify(mark10SavedData));
 
       mark10CurrentSet += 1;
       mark10InitSet();
@@ -994,7 +1090,7 @@
     container.innerHTML = '';
     statsGrid.innerHTML = '';
 
-    const dataStr = localStorage.getItem('darts10MarkHistory');
+    const dataStr = localStorage.getItem('dartsMark10History');
     mark10SavedData = dataStr ? JSON.parse(dataStr) : [];
 
     if (mark10SavedData.length === 0) {
@@ -1009,11 +1105,8 @@
 
     let overallDarts = {};
     targetNumbers.forEach(num => { overallDarts[num] = 0; });
-    
     mark10SavedData.forEach(data => {
-      targetNumbers.forEach(num => {
-        overallDarts[num] += data.scores[num].darts;
-      });
+      targetNumbers.forEach(num => { overallDarts[num] += data.scores[num].darts; });
     });
 
     targetNumbers.forEach(num => {
@@ -1021,8 +1114,7 @@
       statsGrid.innerHTML += `
         <div class="stat-item">
           <div class="stat-num">${num}</div>
-          <div class="stat-row">Avg Darts</div>
-          <div class="stat-avg-overall" style="margin-top:4px;">${avgDarts}</div>
+          <div class="stat-row">Darts: <span class="stat-avg-overall">${avgDarts}</span></div>
         </div>
       `;
     });
@@ -1055,8 +1147,7 @@
         dailyStatsHtml += `
           <div class="stat-item">
             <div class="stat-num">${num}</div>
-            <div class="stat-row">Avg Darts</div>
-            <div class="stat-avg-daily" style="margin-top:4px;">${avgDarts}</div>
+            <div class="stat-row">Darts: <span class="stat-avg-daily">${avgDarts}</span></div>
           </div>
         `;
       });
@@ -1072,7 +1163,7 @@
         let headerHtml = `
           <div class="history-header">
             <span style="font-weight:bold;">SET ${data.setNumber} <span class="history-time" style="margin-left:10px;">${timeOnly}</span></span>
-            <span style="font-weight:bold;">TOTAL DARTS: ${data.totalDarts}</span>
+            <span style="font-weight:bold;">TOTAL: ${data.totalDarts} DARTS</span>
           </div>
         `;
         let gridHtml = `<div class="history-grid">`;
@@ -1092,12 +1183,12 @@
   }
 
   function mark10ExportData() {
-    const dataStr = localStorage.getItem('darts10MarkHistory');
+    const dataStr = localStorage.getItem('dartsMark10History');
     if (!dataStr || JSON.parse(dataStr).length === 0) { alert('書き出すデータがありません。'); return; }
     const dataUri = "data:text/json;charset=utf-8," + encodeURIComponent(dataStr);
     const a = document.createElement('a');
     a.setAttribute("href", dataUri);
-    a.setAttribute("download", "10mark_backup.json");
+    a.setAttribute("download", "mark10_practice_backup.json");
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1111,8 +1202,8 @@
       try {
         const imported = JSON.parse(e.target.result);
         if (Array.isArray(imported)) {
-          if (confirm(`読み込んだファイルには ${imported.length} 件のデータが含まれています。統合（上書き）しますか？`)) {
-            localStorage.setItem('darts10MarkHistory', JSON.stringify(imported));
+          if (confirm(`読み込んだファイルには ${imported.length} 件のデータが含まれています。上書きしますか？`)) {
+            localStorage.setItem('dartsMark10History', JSON.stringify(imported));
             mark10CurrentSet = imported.length > 0 ? imported[0].setNumber + 1 : 1;
             mark10InitSet();
             mark10RenderHistory();
@@ -1127,7 +1218,7 @@
 
   function mark10ClearHistory() {
     if (confirm('すべての10-Mark履歴を削除しますか？')) {
-      localStorage.removeItem('darts10MarkHistory');
+      localStorage.removeItem('dartsMark10History');
       mark10SavedData = [];
       mark10CurrentSet = 1;
       mark10InitSet();
@@ -1135,29 +1226,286 @@
     }
   }
 
-  // 初期化実行
-  function init() {
-    updateDateDisplays();
-    
-    // Cricket読み込み
-    const cData = localStorage.getItem('dartsCricketHistory');
-    if (cData) {
-      cricketSavedData = JSON.parse(cData);
-      if (cricketSavedData.length > 0) cricketCurrentSet = cricketSavedData[0].setNumber + 1;
-    }
-    cricketInitSet();
 
-    // 10-Mark読み込み
-    const mData = localStorage.getItem('darts10MarkHistory');
-    if (mData) {
-      mark10SavedData = JSON.parse(mData);
-      if (mark10SavedData.length > 0) mark10CurrentSet = mark10SavedData[0].setNumber + 1;
-    }
-    mark10InitSet();
+  /* ==========================================================
+     3. BULL-99 ロジック
+     ========================================================== */
+  const BULL99_PHASES = [
+    { id: 'early', name: 'Early (1-33)' },
+    { id: 'middle', name: 'Middle (34-66)' },
+    { id: 'late', name: 'Late (67-99)' }
+  ];
+  const BULL99_TOTAL_DARTS = 99;
+
+  let bull99CurrentSet = 1;
+  let bull99ActivePhaseIndex = 0; // 0: early, 1: middle, 2: late
+  let bull99Scores = {};
+  let bull99HistoryStack = [];
+  let bull99SavedData = [];
+
+  function bull99InitSet() {
+    bull99Scores = {
+      early: { out: 0, single: 0, double: 0 },
+      middle: { out: 0, single: 0, double: 0 },
+      late: { out: 0, single: 0, double: 0 }
+    };
+    bull99ActivePhaseIndex = 0;
+    bull99HistoryStack = [];
+    document.getElementById('bull99-set-number').textContent = bull99CurrentSet;
+    bull99RenderTable();
   }
 
-  init();
-</script>
+  function bull99GetCurrentDartsCount() {
+    let total = 0;
+    BULL99_PHASES.forEach(p => {
+      const s = bull99Scores[p.id];
+      total += (s.out + s.single + s.double);
+    });
+    return total;
+  }
 
+  function bull99RenderTable() {
+    const tbody = document.getElementById('bull99-tbody');
+    tbody.innerHTML = '';
+
+    BULL99_PHASES.forEach((p, index) => {
+      const tr = document.createElement('tr');
+      if (index === bull99ActivePhaseIndex) tr.className = 'active';
+      tr.onclick = () => {
+        bull99ActivePhaseIndex = index;
+        bull99RenderTable();
+      };
+
+      const tdName = document.createElement('td');
+      tdName.textContent = p.name;
+      const tdOut = document.createElement('td');
+      tdOut.textContent = bull99Scores[p.id].out;
+      const tdSingle = document.createElement('td');
+      tdSingle.textContent = bull99Scores[p.id].single;
+      const tdDouble = document.createElement('td');
+      tdDouble.textContent = bull99Scores[p.id].double;
+
+      tr.appendChild(tdName);
+      tr.appendChild(tdOut);
+      tr.appendChild(tdSingle);
+      tr.appendChild(tdDouble);
+      tbody.appendChild(tr);
+    });
+
+    const currentTotalDarts = bull99GetCurrentDartsCount();
+    const isFinished = currentTotalDarts >= BULL99_TOTAL_DARTS;
+    document.querySelectorAll('#bull99-practice-view .controls-bull99 button').forEach(btn => btn.disabled = isFinished);
+  }
+
+  function bull99RecordHit(type) {
+    if (bull99GetCurrentDartsCount() >= BULL99_TOTAL_DARTS) return;
+
+    const activePhaseId = BULL99_PHASES[bull99ActivePhaseIndex].id;
+
+    bull99HistoryStack.push({
+      phaseId: activePhaseId,
+      type: type // 0: out, 1: single, 2: double
+    });
+
+    if (type === 0) bull99Scores[activePhaseId].out += 1;
+    else if (type === 1) bull99Scores[activePhaseId].single += 1;
+    else if (type === 2) bull99Scores[activePhaseId].double += 1;
+
+    // 現在のフェーズの投数が33投に達したら次のフェーズへ自動進行
+    const pScores = bull99Scores[activePhaseId];
+    const phaseDarts = pScores.out + pScores.single + pScores.double;
+    if (phaseDarts >= 33 && bull99ActivePhaseIndex < BULL99_PHASES.length - 1) {
+      bull99ActivePhaseIndex += 1;
+    }
+
+    bull99RenderTable();
+  }
+
+  function bull99Undo() {
+    if (bull99HistoryStack.length === 0) {
+      alert('取り消せる記録がありません。');
+      return;
+    }
+    const lastAction = bull99HistoryStack.pop();
+    bull99ActivePhaseIndex = BULL99_PHASES.findIndex(p => p.id === lastAction.phaseId);
+
+    if (lastAction.type === 0) bull99Scores[lastAction.phaseId].out -= 1;
+    else if (lastAction.type === 1) bull99Scores[lastAction.phaseId].single -= 1;
+    else if (lastAction.type === 2) bull99Scores[lastAction.phaseId].double -= 1;
+
+    bull99RenderTable();
+  }
+
+  function bull99FinishSet() {
+    const currentTotalDarts = bull99GetCurrentDartsCount();
+    if (currentTotalDarts < BULL99_TOTAL_DARTS) {
+      if (!confirm(`まだ99投に達していませんが（現在 ${currentTotalDarts} 投）、このまま保存しますか？`)) return;
+    } else {
+      if (!confirm(`第${bull99CurrentSet}セットの記録を保存して、次へ進みますか？`)) return;
+    }
+
+    let totalHits = 0;
+    let totalScore = 0;
+    BULL99_PHASES.forEach(p => {
+      const s = bull99Scores[p.id];
+      totalHits += (s.single + s.double);
+      totalScore += (s.single * 50 + s.double * 100);
+    });
+
+    const setData = {
+      date: getFormattedDate(),
+      setNumber: bull99CurrentSet,
+      scores: JSON.parse(JSON.stringify(bull99Scores)),
+      totalHits: totalHits,
+      totalScore: totalScore,
+      totalDarts: currentTotalDarts
+    };
+
+    bull99SavedData.unshift(setData);
+    localStorage.setItem('dartsBull99History', JSON.stringify(bull99SavedData));
+
+    bull99CurrentSet += 1;
+    bull99InitSet();
+  }
+
+  function bull99RenderHistory() {
+    const container = document.getElementById('bull99-history-container');
+    const statsGrid = document.getElementById('bull99-stats-grid');
+    const statsPanel = document.getElementById('bull99-stats-panel');
+    const statsSubtitle = document.getElementById('bull99-stats-subtitle');
+    
+    container.innerHTML = '';
+    statsGrid.innerHTML = '';
+
+    const dataStr = localStorage.getItem('dartsBull99History');
+    bull99SavedData = dataStr ? JSON.parse(dataStr) : [];
+
+    if (bull99SavedData.length === 0) {
+      statsPanel.style.display = 'none';
+      container.innerHTML = '<p style="text-align:center; color:#94a3b8; padding: 20px 0;">NO DATA</p>';
+      return;
+    }
+
+    statsPanel.style.display = 'block';
+    const totalSets = bull99SavedData.length;
+    statsSubtitle.textContent = `TOTAL SETS: ${totalSets}`;
+
+    let overallHits = 0;
+    let overallScore = 0;
+    let phaseOverallHits = { early: 0, middle: 0, late: 0 };
+
+    bull99SavedData.forEach(data => {
+      overallHits += data.totalHits;
+      overallScore += data.totalScore;
+      BULL99_PHASES.forEach(p => {
+        phaseOverallHits[p.id] += (data.scores[p.id].single + data.scores[p.id].double);
+      });
+    });
+
+    const avgHits = (overallHits / totalSets).toFixed(1);
+    const avgScore = (overallScore / totalSets).toFixed(1);
+
+    statsGrid.innerHTML = `
+      <div class="stat-item" style="grid-column: span 2;">
+        <div class="stat-num">Average Hits</div>
+        <div class="stat-row"><span class="stat-avg-overall">${avgHits} / 99</span></div>
+      </div>
+      <div class="stat-item" style="grid-column: span 2;">
+        <div class="stat-num">Average Score</div>
+        <div class="stat-row"><span class="stat-avg-overall">${avgScore} pts</span></div>
+      </div>
+    `;
+
+    bull99SavedData.forEach(data => {
+      const card = document.createElement('div');
+      card.className = 'history-card';
+      const timeOnly = data.date.split(' ')[1] || '';
+      const dateOnly = data.date.split(' ')[0] || '';
+
+      let headerHtml = `
+        <div class="history-header">
+          <span style="font-weight:bold;">SET ${data.setNumber} <span class="history-time" style="margin-left:10px;">${dateOnly} ${timeOnly}</span></span>
+          <span style="font-weight:bold;">HITS: ${data.totalHits} / ${data.totalDarts} (Score: ${data.totalScore})</span>
+        </div>
+      `;
+
+      let gridHtml = `<div class="history-grid-bull99">
+        <div>Phase</div>
+        <div>OUT</div>
+        <div>SINGLE</div>
+        <div>DOUBLE</div>
+        <div>TOTAL</div>
+      `;
+
+      BULL99_PHASES.forEach(p => {
+        const s = data.scores[p.id];
+        const pTotal = s.out + s.single + s.double;
+        const pHits = s.single + s.double;
+        gridHtml += `
+          <div style="color:var(--text-sub); text-align:left; padding-left:8px;">${p.name.split(' ')[0]}</div>
+          <div>${s.out}</div>
+          <div>${s.single}</div>
+          <div>${s.double}</div>
+          <div class="total-col">${pHits} (${pTotal})</div>
+        `;
+      });
+
+      gridHtml += `</div>`;
+      card.innerHTML = headerHtml + gridHtml;
+      container.appendChild(card);
+    });
+  }
+
+  function bull99ExportData() {
+    const dataStr = localStorage.getItem('dartsBull99History');
+    if (!dataStr || JSON.parse(dataStr).length === 0) { alert('書き出すデータがありません。'); return; }
+    const dataUri = "data:text/json;charset=utf-8," + encodeURIComponent(dataStr);
+    const a = document.createElement('a');
+    a.setAttribute("href", dataUri);
+    a.setAttribute("download", "bull99_challenge_backup.json");
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  function bull99ImportData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const imported = JSON.parse(e.target.result);
+        if (Array.isArray(imported)) {
+          if (confirm(`読み込んだファイルには ${imported.length} 件のデータが含まれています。上書きしますか？`)) {
+            localStorage.setItem('dartsBull99History', JSON.stringify(imported));
+            bull99CurrentSet = imported.length > 0 ? imported[0].setNumber + 1 : 1;
+            bull99InitSet();
+            bull99RenderHistory();
+            alert('読み込みが完了しました！');
+          }
+        } else { alert('形式が正しくありません。'); }
+      } catch (err) { alert('読み込みに失敗しました。'); }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
+  }
+
+  function bull99ClearHistory() {
+    if (confirm('すべてのBull-99履歴を削除しますか？')) {
+      localStorage.removeItem('dartsBull99History');
+      bull99SavedData = [];
+      bull99CurrentSet = 1;
+      bull99InitSet();
+      bull99RenderHistory();
+    }
+  }
+
+  // 初期化実行
+  window.onload = function() {
+    cricketInitSet();
+    mark10InitSet();
+    bull99InitSet();
+  };
+</script>
 </body>
 </html>
